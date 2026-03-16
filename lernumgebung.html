@@ -49,12 +49,13 @@
     .color-option.active { outline: 3px solid #93c5fd; }
     .hint { font-size: .9rem; color: #334155; }
 
-    table { width: 100%; border-collapse: collapse; background: #fff; }
-    th, td { border: 1px solid #cbd5e1; text-align: center; padding: .4rem; }
+    table { width: 100%; border-collapse: collapse; background: #fff; table-layout: fixed; }
+    th, td { border: 1px solid #cbd5e1; text-align: center; padding: .4rem; width: calc(100% / 7); }
     .small-input { width: 4.4rem; padding: .25rem; border: 1px solid #94a3b8; border-radius: 6px; }
-    .arrow-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin-top: .55rem; }
-    .arrow-card { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: .45rem; text-align: center; font-size: .92rem; }
-    .arrow { font-weight: 700; }
+    .arrow-svg-wrap { margin-top: .6rem; }
+    .arrow-label { font-size: .86rem; fill: #1e3a8a; font-weight: 600; }
+    .arrow-line { fill: none; stroke: #334155; stroke-width: 3; stroke-linecap: round; }
+    .arrow-line.pending { stroke-dasharray: 6 6; }
   </style>
 </head>
 <body>
@@ -105,17 +106,23 @@
                 <th>Quadratzahl</th><td>1</td><td>4</td><td>9</td><td>16</td><td><input class="small-input" id="q5" aria-label="Quadratzahl Schritt 5" /></td><td><input class="small-input" id="q6" aria-label="Quadratzahl Schritt 6" /></td>
               </tr>
             </table>
-            <div class="arrow-row">
-              <div class="arrow-card"><span class="arrow">4 → 9</span><br>(+5)</div>
-              <div class="arrow-card"><span class="arrow">9 → 16</span><br>(+7)</div>
-              <div class="arrow-card"><span class="arrow">16 → □</span><br>(+<input class="small-input" id="d4" aria-label="Zuwachs Schritt 4" />)</div>
-              <div class="arrow-card"><span class="arrow">□ → □</span><br>(+<input class="small-input" id="d5" aria-label="Zuwachs Schritt 5" />)</div>
-            </div>
-          </div>
+            <div class="arrow-svg-wrap" aria-label="Pfeile zwischen den Spalten">
+              <svg viewBox="0 0 840 120" width="100%" role="img" aria-label="Pfeile von einer Spalte zur nächsten">
+                <defs>
+                  <marker id="arrowHead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 z" fill="#334155"></path>
+                  </marker>
+                </defs>
+                <path class="arrow-line" marker-end="url(#arrowHead)" d="M 245 78 Q 295 28 345 78" />
+                <text class="arrow-label" x="292" y="24">+5</text>
 
-          <div class="task-part">
-            <strong>c) Wie sehen die nächsten Zahlen der Zahlenfolge aus?</strong>
-            <p class="hint">Nutze deine Einträge aus b) und ergänze die Folge: 4, 9, 16, …</p>
+                <path class="arrow-line" marker-end="url(#arrowHead)" d="M 365 78 Q 415 28 465 78" />
+                <text class="arrow-label" x="412" y="24">+7</text>
+
+                <path class="arrow-line pending" marker-end="url(#arrowHead)" d="M 485 78 Q 535 28 585 78" />
+                <path class="arrow-line pending" marker-end="url(#arrowHead)" d="M 605 78 Q 655 28 705 78" />
+              </svg>
+            </div>
           </div>
         </div>
       </section>
