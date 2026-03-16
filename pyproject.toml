@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worksheet-tool"
+version = "0.1.0"
+description = "Tool zum Erstellen einheitlicher Mathematik-Arbeitsblätter"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "Lernmaterial Team"}]
+dependencies = []
+
+[project.scripts]
+worksheet-tool = "worksheet_tool.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
