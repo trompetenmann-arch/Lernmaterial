@@ -58,3 +58,9 @@ worksheet-tool render \
 - `src/worksheet_tool/renderer.py`: Einheitliches Layout als Markdown
 - `src/worksheet_tool/cli.py`: CLI-Befehle (`new`, `add-task`, `render`)
 
+
+## Interaktive HTML-Lernumgebung
+
+Für eine schrittweise Visualisierung der Zahlenfolge `4, 9, 16, …` gibt es die Datei `lernumgebung.html`.
+Sie kann direkt im Browser geöffnet werden.
+
