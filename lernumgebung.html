@@ -50,8 +50,8 @@
     .hint { font-size: .9rem; color: #334155; }
 
     table { width: 100%; border-collapse: collapse; background: #fff; table-layout: fixed; }
-    th, td { border: 1px solid #cbd5e1; text-align: center; padding: .4rem; width: calc(100% / 7); }
-    .small-input { width: 4.4rem; padding: .25rem; border: 1px solid #94a3b8; border-radius: 6px; }
+    th, td { border: 1px solid #cbd5e1; text-align: center; padding: .4rem; width: calc(100% / 7); overflow: hidden; }
+    .small-input { width: 100%; max-width: 4.2rem; box-sizing: border-box; padding: .25rem; border: 1px solid #94a3b8; border-radius: 6px; }
     .arrow-svg-wrap { margin-top: .6rem; }
     .arrow-label { font-size: .86rem; fill: #1e3a8a; font-weight: 600; }
     .arrow-line { fill: none; stroke: #334155; stroke-width: 3; stroke-linecap: round; }
@@ -71,8 +71,6 @@
           <span class="chip"><span class="dot" style="background:#2563eb"></span>Blau (4)</span>
           <span class="chip"><span class="dot" style="background:#ef4444"></span>Rot (+5)</span>
           <span class="chip"><span class="dot" style="background:#22c55e"></span>Grün (+7)</span>
-          <span class="chip"><span class="dot" style="background:#eab308"></span>Gelb (Aufgabe a)</span>
-          <span class="chip"><span class="dot" style="background:#a855f7"></span>Lila (Aufgabe a)</span>
         </div>
 
         <div class="controls">
@@ -93,7 +91,6 @@
               <button id="pickPurple" type="button" class="color-option">Lilane Punkte setzen</button>
               <button id="clearManual" type="button">Eigene Punkte löschen</button>
             </div>
-            <p class="hint">Tipp: Nach +5 und +7 folgen beim Muster +9 und +11.</p>
           </div>
 
           <div class="task-part">
@@ -103,7 +100,7 @@
                 <th>Schritt</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th>
               </tr>
               <tr>
-                <th>Quadratzahl</th><td>1</td><td>4</td><td>9</td><td>16</td><td><input class="small-input" id="q5" aria-label="Quadratzahl Schritt 5" /></td><td><input class="small-input" id="q6" aria-label="Quadratzahl Schritt 6" /></td>
+                <th>Punkte</th><td>1</td><td>4</td><td>9</td><td>16</td><td><input class="small-input" id="q5" aria-label="Punkte Schritt 5" /></td><td><input class="small-input" id="q6" aria-label="Punkte Schritt 6" /></td>
               </tr>
             </table>
             <div class="arrow-svg-wrap" aria-label="Pfeile zwischen den Spalten">
@@ -113,14 +110,21 @@
                     <path d="M0,0 L8,4 L0,8 z" fill="#334155"></path>
                   </marker>
                 </defs>
-                <path class="arrow-line" marker-end="url(#arrowHead)" d="M 245 78 Q 295 28 345 78" />
-                <text class="arrow-label" x="292" y="24">+5</text>
-
                 <path class="arrow-line" marker-end="url(#arrowHead)" d="M 365 78 Q 415 28 465 78" />
-                <text class="arrow-label" x="412" y="24">+7</text>
+                <text class="arrow-label" x="412" y="24">+5</text>
 
-                <path class="arrow-line pending" marker-end="url(#arrowHead)" d="M 485 78 Q 535 28 585 78" />
+                <path class="arrow-line" marker-end="url(#arrowHead)" d="M 485 78 Q 535 28 585 78" />
+                <text class="arrow-label" x="532" y="24">+7</text>
+
                 <path class="arrow-line pending" marker-end="url(#arrowHead)" d="M 605 78 Q 655 28 705 78" />
+                <foreignObject x="638" y="16" width="34" height="24">
+                  <input xmlns="http://www.w3.org/1999/xhtml" class="small-input" aria-label="Zuwachs von Schritt 4 auf 5" />
+                </foreignObject>
+
+                <path class="arrow-line pending" marker-end="url(#arrowHead)" d="M 725 78 Q 775 28 825 78" />
+                <foreignObject x="758" y="16" width="34" height="24">
+                  <input xmlns="http://www.w3.org/1999/xhtml" class="small-input" aria-label="Zuwachs von Schritt 5 auf 6" />
+                </foreignObject>
               </svg>
             </div>
           </div>
