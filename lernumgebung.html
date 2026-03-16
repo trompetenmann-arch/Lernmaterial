@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lernumgebung – Wachsende Quadrate</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --border: #d1d5db;
+    }
+    body { margin: 0; background: var(--bg); color: var(--text); padding: 1rem; }
+    .app {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 8px 26px rgba(0,0,0,.08);
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    h1 { margin: 0 0 .75rem; font-size: clamp(1.2rem, 1.8vw, 1.8rem); }
+    .layout { display: grid; gap: 1rem; grid-template-columns: 1.1fr 1fr; }
+    @media (max-width: 920px) { .layout { grid-template-columns: 1fr; } }
+
+    #viz { width: 100%; max-width: 560px; aspect-ratio: 1; border: 1px dashed var(--border); border-radius: 12px; background: #fbfdff; justify-self: center; }
+    .panel { display: grid; gap: .75rem; align-content: start; }
+    .status { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: .75rem; color: #1e3a8a; line-height: 1.45; }
+    .legend { display: flex; flex-wrap: wrap; gap: .5rem; font-size: .9rem; }
+    .chip { border: 1px solid var(--border); border-radius: 999px; padding: .22rem .6rem; display: inline-flex; align-items: center; gap: .35rem; background: #fff; }
+    .dot { width: .7rem; height: .7rem; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,.2); }
+
+    .controls { display: flex; gap: .6rem; flex-wrap: wrap; }
+    button { border: 0; background: var(--primary); color: #fff; padding: .62rem .95rem; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    button:hover { background: var(--primary-hover); }
+    button:disabled { cursor: not-allowed; opacity: .45; background: #475569; }
+
+    .task-box { border: 1px solid #eab308; background: #fefce8; border-radius: 10px; padding: .85rem; display: none; line-height: 1.45; }
+    .task-box.visible { display: block; }
+    .task-part { margin-top: .8rem; padding-top: .8rem; border-top: 1px dashed #e2e8f0; }
+    .color-picker { display: flex; gap: .6rem; flex-wrap: wrap; margin: .4rem 0; }
+    .color-option { border: 1px solid #94a3b8; background: #fff; color: #0f172a; }
+    .color-option.active { outline: 3px solid #93c5fd; }
+    .hint { font-size: .9rem; color: #334155; }
+
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { border: 1px solid #cbd5e1; text-align: center; padding: .4rem; }
+    .small-input { width: 4.4rem; padding: .25rem; border: 1px solid #94a3b8; border-radius: 6px; }
+    .arrow-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin-top: .55rem; }
+    .arrow-card { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: .45rem; text-align: center; font-size: .92rem; }
+    .arrow { font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Lernumgebung: Wachsende Quadratmuster</h1>
+    <div class="layout">
+      <svg id="viz" viewBox="0 0 520 520" role="img" aria-label="Visualisierung des Punktmusters"></svg>
+
+      <section class="panel">
+        <div id="status" class="status"></div>
+
+        <div class="legend" aria-label="Legende">
+          <span class="chip"><span class="dot" style="background:#2563eb"></span>Blau (4)</span>
+          <span class="chip"><span class="dot" style="background:#ef4444"></span>Rot (+5)</span>
+          <span class="chip"><span class="dot" style="background:#22c55e"></span>Grün (+7)</span>
+          <span class="chip"><span class="dot" style="background:#eab308"></span>Gelb (Aufgabe a)</span>
+          <span class="chip"><span class="dot" style="background:#a855f7"></span>Lila (Aufgabe a)</span>
+        </div>
+
+        <div class="controls">
+          <button id="nextBtn">Nächster Schritt</button>
+          <button id="resetBtn">Neu starten</button>
+          <button id="showTaskBtn" disabled>Zur Aufgabe</button>
+        </div>
+
+        <div id="taskBox" class="task-box">
+          <strong>Aufgabe:</strong>
+          <p>So entsteht die Zahlenfolge <strong>4, 9, 16, …</strong></p>
+
+          <div class="task-part">
+            <strong>a) Erweitere das Muster auf dem Raster mit weiteren Farben.</strong>
+            <p class="hint">Wähle eine Farbe aus und klicke auf freie Gitterpunkte im großen Raster.</p>
+            <div class="color-picker">
+              <button id="pickYellow" type="button" class="color-option active">Gelbe Punkte setzen</button>
+              <button id="pickPurple" type="button" class="color-option">Lilane Punkte setzen</button>
+              <button id="clearManual" type="button">Eigene Punkte löschen</button>
+            </div>
+            <p class="hint">Tipp: Nach +5 und +7 folgen beim Muster +9 und +11.</p>
+          </div>
+
+          <div class="task-part">
+            <strong>b) Wie viele Punkte kommen 3. und im 4. Schritt hinzu?</strong>
+            <table>
+              <tr>
+                <th>Schritt</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th>
+              </tr>
+              <tr>
+                <th>Quadratzahl</th><td>1</td><td>4</td><td>9</td><td>16</td><td><input class="small-input" id="q5" aria-label="Quadratzahl Schritt 5" /></td><td><input class="small-input" id="q6" aria-label="Quadratzahl Schritt 6" /></td>
+              </tr>
+            </table>
+            <div class="arrow-row">
+              <div class="arrow-card"><span class="arrow">4 → 9</span><br>(+5)</div>
+              <div class="arrow-card"><span class="arrow">9 → 16</span><br>(+7)</div>
+              <div class="arrow-card"><span class="arrow">16 → □</span><br>(+<input class="small-input" id="d4" aria-label="Zuwachs Schritt 4" />)</div>
+              <div class="arrow-card"><span class="arrow">□ → □</span><br>(+<input class="small-input" id="d5" aria-label="Zuwachs Schritt 5" />)</div>
+            </div>
+          </div>
+
+          <div class="task-part">
+            <strong>c) Wie sehen die nächsten Zahlen der Zahlenfolge aus?</strong>
+            <p class="hint">Nutze deine Einträge aus b) und ergänze die Folge: 4, 9, 16, …</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const svg = document.getElementById('viz');
+    const status = document.getElementById('status');
+    const nextBtn = document.getElementById('nextBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const showTaskBtn = document.getElementById('showTaskBtn');
+    const taskBox = document.getElementById('taskBox');
+    const pickYellow = document.getElementById('pickYellow');
+    const pickPurple = document.getElementById('pickPurple');
+    const clearManual = document.getElementById('clearManual');
+
+    const rings = [
+      { color: '#2563eb', label: 'blau', points: [[0,0],[1,0],[0,1],[1,1]], added: 4, total: 4 },
+      { color: '#ef4444', label: 'rot', points: [[0,2],[1,2],[2,2],[2,1],[2,0]], added: 5, total: 9 },
+      { color: '#22c55e', label: 'grün', points: [[0,3],[1,3],[2,3],[3,3],[3,2],[3,1],[3,0]], added: 7, total: 16 }
+    ];
+
+    const manualPoints = new Map();
+    let step = 0;
+    let selectedColor = '#eab308';
+
+    const pad = 45;
+    const size = 430;
+    const max = 5; // bis Schritt 6 (Quadratzahlen 36)
+    const unit = size / max;
+
+    function make(tag, attrs) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+      return el;
+    }
+
+    function drawGrid() {
+      svg.innerHTML = '';
+
+      for (let i = 0; i <= max; i++) {
+        const x = pad + i * unit;
+        const y = pad + i * unit;
+        svg.appendChild(make('line', { x1: x, y1: pad, x2: x, y2: pad + size, stroke: '#d1d5db', 'stroke-width': 1 }));
+        svg.appendChild(make('line', { x1: pad, y1: y, x2: pad + size, y2: y, stroke: '#d1d5db', 'stroke-width': 1 }));
+      }
+
+      const outer = step === 0 ? 1 : step + 1;
+      svg.appendChild(make('rect', {
+        x: pad,
+        y: pad + size - outer * unit,
+        width: outer * unit,
+        height: outer * unit,
+        fill: 'none',
+        stroke: '#111827',
+        'stroke-width': 3
+      }));
+
+      const automaticPoints = rings.slice(0, step + 1).flatMap(r => r.points.map(p => ({ p, color: r.color })));
+      const allPoints = [...automaticPoints, ...Array.from(manualPoints.entries()).map(([k, color]) => ({ p: k.split(',').map(Number), color }))];
+
+      for (const { p, color } of allPoints) {
+        const [gx, gy] = p;
+        const cx = pad + gx * unit;
+        const cy = pad + size - gy * unit;
+        svg.appendChild(make('circle', { cx, cy, r: 8, fill: color, stroke: 'rgba(0,0,0,.25)', 'stroke-width': 1 }));
+      }
+    }
+
+    function updateUI() {
+      drawGrid();
+      const ring = rings[step];
+      const detail = step === 0
+        ? 'Wir starten mit einem Quadrat der Seitenlänge 1 und 4 blauen Eckpunkten.'
+        : `Das Quadrat wird vergrößert. Es kommen ${ring.added} ${ring.label}e Punkte hinzu.`;
+
+      status.innerHTML = `<strong>Schritt ${step + 1} von ${rings.length}</strong><br>${detail}<br>Insgesamt liegen jetzt <strong>${ring.total}</strong> Punkte im Muster.`;
+      nextBtn.disabled = step >= rings.length - 1;
+      showTaskBtn.disabled = step < rings.length - 1;
+      if (step < rings.length - 1) taskBox.classList.remove('visible');
+    }
+
+    function setActiveColor(color) {
+      selectedColor = color;
+      pickYellow.classList.toggle('active', color === '#eab308');
+      pickPurple.classList.toggle('active', color === '#a855f7');
+    }
+
+    svg.addEventListener('click', (event) => {
+      if (!taskBox.classList.contains('visible')) return;
+      const pt = svg.createSVGPoint();
+      pt.x = event.clientX;
+      pt.y = event.clientY;
+      const cursor = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+      const gx = Math.round((cursor.x - pad) / unit);
+      const gy = Math.round((pad + size - cursor.y) / unit);
+      if (gx < 0 || gx > max || gy < 0 || gy > max) return;
+
+      const key = `${gx},${gy}`;
+      const usedByAutomatic = rings.flatMap(r => r.points).some(([ax, ay]) => ax === gx && ay === gy);
+      if (usedByAutomatic) return;
+
+      manualPoints.set(key, selectedColor);
+      drawGrid();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (step < rings.length - 1) {
+        step += 1;
+        updateUI();
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      step = 0;
+      manualPoints.clear();
+      taskBox.classList.remove('visible');
+      updateUI();
+    });
+
+    showTaskBtn.addEventListener('click', () => {
+      taskBox.classList.add('visible');
+      taskBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    pickYellow.addEventListener('click', () => setActiveColor('#eab308'));
+    pickPurple.addEventListener('click', () => setActiveColor('#a855f7'));
+    clearManual.addEventListener('click', () => { manualPoints.clear(); drawGrid(); });
+
+    setActiveColor('#eab308');
+    updateUI();
+  </script>
+</body>
+</html>
