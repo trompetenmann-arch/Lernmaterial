@@ -241,7 +241,7 @@
         <div class="legend">
           <span class="legend-item"><span class="swatch" style="background:#bfdbfe"></span>x²-Fläche</span>
           <span class="legend-item"><span class="swatch" style="background:#fecaca"></span>10x-Fläche</span>
-          <span class="legend-item"><span class="swatch" style="background:#fde68a"></span>ergänzte 25</span>
+          <span class="legend-item"><span class="swatch" style="background:#e5e7eb"></span>ergänzte 25</span>
           <span class="legend-item"><span class="swatch" style="background:#dcfce7"></span>fertiges Quadrat</span>
         </div>
       </div>
@@ -381,7 +381,7 @@
       // Wichtige Teile farblich betonen, damit Beziehungen schneller erkannt werden.
       return eq
                 .replace("25", "<mark>25</mark>")
-        .replace("(x + 5)²", "<mark>(x + 5)²</mark>");
+        ;
     }
 
     function renderQuestion(q) {
@@ -470,6 +470,25 @@
       svg.appendChild(r);
     }
 
+
+    // Zeichnet 39 kleine Einheitsquadrate unterhalb der Hauptfläche,
+    // damit die rechte Seite (=39) sichtbar ist, ohne die Modellfläche zu überdecken.
+    function drawUnitSquares39(startX, startY, size) {
+      const coords = [
+        [0,0],[2,0],[4,0],[7,0],[9,0],[12,0],
+        [1,1],[3,1],[6,1],[8,1],[11,1],
+        [0,2],[2,2],[5,2],[7,2],[10,2],[12,2],
+        [1,3],[4,3],[6,3],[9,3],[11,3],
+        [0,4],[3,4],[5,4],[8,4],[10,4],[12,4],
+        [1,5],[4,5],[7,5],[9,5],[11,5],
+        [2,6],[5,6],[8,6],[10,6],[12,6],[6,7]
+      ];
+
+      coords.slice(0, 39).forEach(([cx, cy]) => {
+        rect(startX + cx * (size + 3), startY + cy * (size + 3), size, size, "#e5e7eb", "#64748b", 1);
+      });
+    }
+
     // Hilfsfunktion: Grundquadrat x² zeichnen.
     function drawXSquare(originX, originY) {
       rect(originX, originY, xLen, xLen, "#bfdbfe");
@@ -485,8 +504,8 @@
       rect(ox + xLen, oy, halfB, xLen, "#fecaca", "#7f1d1d", 0.55);
       txt(ox + xLen + 30, oy + xLen / 2, "10x", 14, "#7f1d1d");
       txt(22, 36, "Start: x² + 10x = 39", 15, "#1d4ed8");
-      dashedRect(280, 100, 110, 110);
-      txt(316, 158, "39", 18, "#0f172a");
+      drawUnitSquares39(35, 295, 14);
+      txt(22, 285, "39 Einheitsquadrate (ungeordnet)", 13, "#334155");
     }
 
 
@@ -516,8 +535,8 @@
       rect(ox, oy + xLen, xLen, halfB, "#fecaca", "#7f1d1d");
 
       // Ergänzungsquadrat 25
-      rect(ox + xLen, oy + xLen, halfB, halfB, "#fde68a", "#92400e");
-      txt(ox + xLen + 14, oy + xLen + 30, "25", 15, "#92400e");
+      rect(ox + xLen, oy + xLen, halfB, halfB, "#e5e7eb", "#475569");
+      txt(ox + xLen + 14, oy + xLen + 30, "25", 15, "#334155");
       txt(22, 34, "Ergänzung: 5 · 5 = 25", 15, "#1d4ed8");
     }
 
@@ -532,7 +551,7 @@
       rect(ox, oy, xLen, xLen, "#bfdbfe", "#334155", 0.9);
       rect(ox + xLen, oy, halfB, xLen, "#fecaca", "#7f1d1d", 0.9);
       rect(ox, oy + xLen, xLen, halfB, "#fecaca", "#7f1d1d", 0.9);
-      rect(ox + xLen, oy + xLen, halfB, halfB, "#fde68a", "#92400e", 0.95);
+      rect(ox + xLen, oy + xLen, halfB, halfB, "#e5e7eb", "#475569", 0.95);
 
       txt(ox + 52, oy + 85, "(x + 5)²", 18, "#14532d");
       txt(ox + (xLen + halfB) / 2 - 20, oy - 20, "x + 5", 14, "#14532d");
@@ -542,13 +561,14 @@
 
     function drawStep6() {
       clearSvg();
-      const ox = 90, oy = 90;
-      rect(ox, oy, 160, 160, "#dcfce7", "#166534");
-      txt(ox + 48, oy + 86, "Fläche 64", 17, "#14532d");
-      txt(ox + 56, oy - 8, "8", 14, "#14532d");
-      txt(ox - 20, oy + 84, "8", 14, "#14532d");
+      const ox = 60, oy = 90;
+      const fullSide = xLen + halfB;
+      rect(ox, oy, fullSide, fullSide, "#dcfce7", "#166534");
+      txt(ox + 58, oy + 120, "Fläche 64", 17, "#14532d");
+      txt(ox + fullSide / 2 - 5, oy - 10, "8", 14, "#14532d");
+      txt(ox - 20, oy + fullSide / 2, "8", 14, "#14532d");
       txt(24, 34, "(x + 5)² = 64  ⇒  x + 5 = 8", 15, "#1d4ed8");
-      txt(24, 290, "Daraus: x = 3", 18, "#0f766e");
+      txt(24, 300, "Daraus: x = 3", 18, "#0f766e");
     }
 
     prevBtn.addEventListener("click", () => {
