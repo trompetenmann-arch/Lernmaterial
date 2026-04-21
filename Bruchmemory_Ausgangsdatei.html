@@ -1,5 +1,3 @@
-Hier ist ein kompaktes, eigenständiges HTML-Applet für ein Brüche-Memory. Es erzeugt zu jeder ausgewählten Schwierigkeit passende Paare aus symbolischen Brüchen und ihren Kreisdiagrammen (mit einfachen Nennern). Starten Sie ein neues Spiel über den Button oder ändern Sie die Schwierigkeit.
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -7,212 +5,368 @@ Hier ist ein kompaktes, eigenständiges HTML-Applet für ein Brüche-Memory. Es 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Brüche-Memory – BIKI</title>
   <style>
-    :root{
-      --bg:#f7f7fb;
-      --card:#ffffff;
-      --text:#1f2937;
-      --muted:#6b7280;
-      --accent:#3b82f6;
-      --accent-2:#10b981;
-      --empty:#e5e7eb;
-      --line:#e5e7eb;
-      --good:#16a34a;
-      --bad:#ef4444;
-      --shadow: 0 4px 14px rgba(0,0,0,.08);
-      --radius: 14px;
+    :root {
+      --bg: #f3f7f5;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dde7e0;
+      --accent: #2563eb;
+      --good: #16a34a;
+      --good-soft: #dcfce7;
+      --bad: #dc2626;
+      --bad-soft: #fee2e2;
+      --pie-filled: #22c55e;
+      --pie-filled-dark: #16a34a;
+      --pie-empty: #e7efe9;
+      --shadow: 0 10px 26px rgba(15, 23, 42, 0.1);
+      --radius: 16px;
       --gap: 12px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-      display:flex;
-      align-items:center;
-      justify-content:center;
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #f8fffa, var(--bg));
+      color: var(--text);
+      font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       padding: 18px;
     }
-    .app{
-      width: min(1100px, 100%);
-      display:grid;
-      grid-template-rows:auto 1fr auto;
+
+    .app {
+      width: min(1140px, 100%);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
       gap: 14px;
     }
-    header{
-      background: var(--card);
+
+    header {
+      background: var(--panel);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 14px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+      display: grid;
+      gap: 12px;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       flex-wrap: wrap;
-      gap: 10px 16px;
+      gap: 8px 14px;
     }
-    header h1{
-      font-size: 20px;
-      margin:0;
-      letter-spacing:.2px;
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.2px;
     }
-    .controls{
-      display:flex;
-      align-items:center;
+
+    .controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
       gap: 10px;
-      flex-wrap: wrap;
     }
-    .controls label{
-      color:var(--muted);
-      font-size:14px;
+
+    .control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--muted);
+      background: #f9fcfa;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 6px 8px;
     }
-    select, button{
-      appearance:none;
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--text);
-      padding:8px 12px;
-      border-radius:10px;
-      font-size:14px;
-      cursor:pointer;
+
+    select, button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 14px;
     }
-    button.primary{
+
+    button {
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .primary {
       background: var(--accent);
-      color:#fff;
       border-color: transparent;
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 5px 16px rgba(37, 99, 235, 0.3);
     }
-    button:disabled{
-      opacity:.6; cursor:not-allowed;
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      align-items: center;
     }
-    .stats{
-      display:flex; gap:14px; color:var(--muted); font-size:14px;
-      align-items:center; flex-wrap: wrap;
+
+    .chip {
+      background: #f6faf7;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
     }
-    .board{
-      background: var(--card);
+
+    .chip.turn {
+      background: #eef8ff;
+      border-color: #c7dff7;
+      color: #155e75;
+      font-weight: 700;
+    }
+
+    .chip.p1 strong { color: #1d4ed8; }
+    .chip.p2 strong { color: #be123c; }
+
+    .board {
+      background: var(--panel);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 16px;
-      min-height: 300px;
-      display:grid;
+      min-height: 320px;
+      display: grid;
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: var(--gap);
-      align-content:start;
+      align-content: start;
     }
-    .card{
+
+    .card {
       perspective: 900px;
-      position:relative;
-      height: 140px;
+      height: 142px;
+      position: relative;
     }
-    .card button{
-      width:100%; height:100%;
-      border:none; padding:0; background:transparent;
+
+    .card button {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      border-radius: 0;
+      display: block;
     }
-    .inner{
-      position:relative;
-      width:100%; height:100%;
-      transition: transform .35s ease;
+
+    .inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
       transform-style: preserve-3d;
-      outline:none;
+      transition: transform .35s ease;
+      outline: none;
     }
+
     .card.flipped .inner,
-    .card.matched .inner{
+    .card.matched .inner {
       transform: rotateY(180deg);
     }
-    .face{
-      position:absolute; inset:0;
-      backface-visibility:hidden;
+
+    .face {
+      position: absolute;
+      inset: 0;
       border-radius: 12px;
-      border:1px solid var(--line);
+      backface-visibility: hidden;
+      border: 1px solid var(--line);
       background: #fff;
-      display:flex; align-items:center; justify-content:center;
-      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 7px 16px rgba(15, 23, 42, 0.08);
     }
-    .front{ /* verdeckte Seite */
-      background: linear-gradient(135deg, #eef2ff, #fdf2f8);
-      border-style:dashed;
+
+    .front {
+      border-style: dashed;
+      background: linear-gradient(135deg, #e9f7ef, #eef3ff);
+      position: relative;
     }
-    .back{
+
+    .front::after {
+      content: "?";
+      font-weight: 800;
+      color: #4b5563;
+      font-size: 22px;
+      opacity: .8;
+    }
+
+    .back {
       transform: rotateY(180deg);
       padding: 8px;
     }
-    .fractext{
-      font-size: 26px;
-      font-weight: 600;
-      letter-spacing:.3px;
+
+    .fractext {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      text-align: center;
     }
-    .fractext small{
-      display:block; color:var(--muted); font-weight:500; font-size:12px; margin-top:6px;
+
+    .piewrap {
+      width: 92px;
+      height: 92px;
     }
-    .piewrap{
-      width: 86px; height: 86px;
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 14px;
+      padding: 0 3px;
     }
-    .legend{
-      position:absolute; right:8px; bottom:8px; color:var(--muted); font-size:12px;
+
+    .status {
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 7px 10px;
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
     }
-    .footer{
-      display:flex; align-items:center; justify-content:space-between;
-      gap: 10px; flex-wrap: wrap; color:var(--muted); font-size:14px;
-      padding: 0 2px;
+
+    .status.good {
+      color: #166534;
+      background: var(--good-soft);
+      border: 1px solid #86efac;
     }
-    .notice{ font-size:13px; }
-    .status{
-      font-weight:600;
+
+    .status.bad {
+      color: #991b1b;
+      background: var(--bad-soft);
+      border: 1px solid #fca5a5;
     }
-    .status.good{ color:var(--good); }
-    .status.bad{ color:var(--bad); }
-    .win{
-      position:fixed; inset:0; display:none;
-      align-items:center; justify-content:center;
-      background: rgba(0,0,0,.35);
-      padding: 24px;
+
+    .status.neutral {
+      color: #374151;
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
     }
-    .win .box{
-      background:#fff; border-radius:16px; padding:18px; width:min(460px,100%);
-      box-shadow: 0 12px 32px rgba(0,0,0,.25);
+
+    .win {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.45);
+      padding: 20px;
+      z-index: 30;
     }
-    .win h2{ margin:0 0 6px; }
-    .win .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-    .sr-only{ position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+    .win .box {
+      background: #fff;
+      width: min(500px, 100%);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    .win h2 { margin: 0 0 6px; }
+    .win p { margin: 0 0 10px; }
+    .win .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+
+    #confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .sr-only {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
   </style>
 </head>
 <body>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
   <div class="app" id="app">
     <header>
-      <h1>Brüche‑Memory</h1>
-      <div class="controls">
-        <label for="difficulty">Schwierigkeit:</label>
-        <select id="difficulty" aria-label="Schwierigkeit wählen">
-          <option value="easy">Leicht (5 Paare)</option>
-          <option value="medium" selected>Mittel (8 Paare)</option>
-          <option value="hard">Schwer (12 Paare)</option>
-        </select>
+      <div class="topline">
+        <h1>Brüche‑Memory</h1>
         <button id="newGame" class="primary">Neues Spiel</button>
       </div>
+
+      <div class="controls">
+        <div class="control">
+          <label for="difficulty">Schwierigkeit</label>
+          <select id="difficulty" aria-label="Schwierigkeit wählen">
+            <option value="easy">Leicht (5 Paare)</option>
+            <option value="medium" selected>Mittel (8 Paare)</option>
+            <option value="hard">Schwer (12 Paare)</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="mode">Modus</label>
+          <select id="mode" aria-label="Spielmodus wählen">
+            <option value="single" selected>Ein Spieler</option>
+            <option value="multi">Zwei Spieler</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <input type="checkbox" id="decimalToggle" />
+          <label for="decimalToggle">Als Dezimalzahl anzeigen</label>
+        </div>
+      </div>
+
       <div class="stats" aria-live="polite">
-        <div>Züge: <strong id="moves">0</strong></div>
-        <div>Zeit: <strong id="time">00:00</strong></div>
-        <div>Gefunden: <strong id="found">0</strong></div>
+        <div class="chip">Züge: <strong id="moves">0</strong></div>
+        <div class="chip">Zeit: <strong id="time">00:00</strong></div>
+        <div class="chip">Gefunden: <strong id="found">0</strong></div>
+        <div class="chip turn" id="turnChip">Am Zug: Spieler 1</div>
+        <div class="chip p1" id="scoreP1">Spieler 1: <strong>0</strong></div>
+        <div class="chip p2" id="scoreP2">Spieler 2: <strong>0</strong></div>
       </div>
     </header>
 
     <main class="board" id="board" aria-label="Spielfeld"></main>
 
     <div class="footer">
-      <div class="notice">
-        Brüche werden in vollständig gekürzter Form und mit einfachen Nennern (2, 3, 4, 5, 6, 8) verwendet.
+      <div>
+        Es werden gekürzte Brüche mit Nennern 2, 3, 4, 5, 6 und 8 verwendet.
       </div>
-      <div id="feedback" class="status" aria-live="polite"></div>
+      <div id="feedback" class="status neutral" aria-live="polite">Viel Erfolg!</div>
     </div>
   </div>
 
   <div class="win" id="win">
     <div class="box">
-      <h2>Geschafft!</h2>
-      <p>Du hast alle Paare gefunden.</p>
+      <h2>Spielende</h2>
+      <p id="resultHeadline">Geschafft!</p>
       <ul>
         <li>Zeit: <strong id="resTime">–</strong></li>
         <li>Züge: <strong id="resMoves">–</strong></li>
+        <li id="resScoreLine">Punkte: <strong id="resScore">–</strong></li>
       </ul>
       <div class="actions">
         <button id="closeWin">Schließen</button>
@@ -222,169 +376,209 @@ Hier ist ein kompaktes, eigenständiges HTML-Applet für ein Brüche-Memory. Es 
   </div>
 
   <script>
-    // Utility: GCD and formatting
-    function gcd(a,b){ while(b){ [a,b] = [b, a%b]; } return a; }
-    function fmtFrac(n,d){ return n + "/" + d; }
+    function gcd(a, b) {
+      while (b) [a, b] = [b, a % b];
+      return a;
+    }
 
-    // Fraction pool by difficulty (denominators kept simple: 2,3,4,5,6,8)
+    function fmtFrac(n, d) {
+      return `${n}/${d}`;
+    }
+
+    function fmtDecimal(n, d) {
+      return (n / d).toLocaleString("de-DE", { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+    }
+
     const DIFF_CONFIG = {
-      easy:  { denoms:[2,3,4],           pairs:5 },
-      medium:{ denoms:[2,3,4,5,6],       pairs:8 },
-      hard:  { denoms:[2,3,4,5,6,8],     pairs:12 }
+      easy: { denoms: [2, 3, 4], pairs: 5 },
+      medium: { denoms: [2, 3, 4, 5, 6], pairs: 8 },
+      hard: { denoms: [2, 3, 4, 5, 6, 8], pairs: 12 }
     };
 
-    function buildPool(denoms){
+    function buildPool(denoms) {
       const pool = [];
-      for(const d of denoms){
-        for(let n=1; n<d; n++){
-          if(gcd(n,d) === 1){
-            pool.push({n, d, key: fmtFrac(n,d)});
-          }
+      for (const d of denoms) {
+        for (let n = 1; n < d; n++) {
+          if (gcd(n, d) === 1) pool.push({ n, d, key: fmtFrac(n, d) });
         }
       }
       return pool;
     }
 
-    function sampleUnique(arr, k){
+    function sampleUnique(arr, k) {
       const a = [...arr];
-      // Fisher-Yates shuffle
-      for(let i=a.length-1;i>0;i--){
-        const j = Math.floor(Math.random()*(i+1));
-        [a[i],a[j]] = [a[j],a[i]];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
       }
       return a.slice(0, Math.min(k, a.length));
     }
 
-    // Build deck: for each fraction, create a text card and a pie card
-    function buildDeck(fractions){
+    function buildDeck(fractions) {
       const deck = [];
-      fractions.forEach((f, idx) => {
-        const pairId = "pair_" + f.key; // shared id to match
-        deck.push({
-          id: pairId + "_txt",
-          pair: pairId,
-          type: "text",
-          n: f.n, d:f.d, label: fmtFrac(f.n,f.d)
-        });
-        deck.push({
-          id: pairId + "_pie",
-          pair: pairId,
-          type: "pie",
-          n: f.n, d:f.d, label: fmtFrac(f.n,f.d)
-        });
+      fractions.forEach((f) => {
+        const pairId = `pair_${f.key}`;
+        deck.push({ id: `${pairId}_txt`, pair: pairId, type: "text", n: f.n, d: f.d });
+        deck.push({ id: `${pairId}_pie`, pair: pairId, type: "pie", n: f.n, d: f.d });
       });
-      // shuffle deck
-      for(let i=deck.length-1;i>0;i--){
-        const j = Math.floor(Math.random()*(i+1));
-        [deck[i],deck[j]] = [deck[j],deck[i]];
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
       }
       return deck;
     }
 
-    // SVG sector path helper
-    function polarToCartesian(cx, cy, r, angleDeg){
-      const rad = (angleDeg - 90) * Math.PI/180;
-      return { x: cx + r*Math.cos(rad), y: cy + r*Math.sin(rad) };
+    function polarToCartesian(cx, cy, r, angleDeg) {
+      const rad = (angleDeg - 90) * Math.PI / 180;
+      return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
     }
-    function sectorPath(cx, cy, r, startAngle, endAngle){
+
+    function sectorPath(cx, cy, r, startAngle, endAngle) {
       const p1 = polarToCartesian(cx, cy, r, startAngle);
       const p2 = polarToCartesian(cx, cy, r, endAngle);
       const largeArc = (endAngle - startAngle) % 360 > 180 ? 1 : 0;
       return `M ${cx} ${cy} L ${p1.x} ${p1.y} A ${r} ${r} 0 ${largeArc} 1 ${p2.x} ${p2.y} Z`;
     }
 
-    function makePieSVG(n, d, size=86){
+    function makePieSVG(n, d, size = 92) {
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", size);
       svg.setAttribute("height", size);
       svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
       svg.setAttribute("role", "img");
-      svg.setAttribute("aria-label", `Kreisdiagramm zu ${fmtFrac(n,d)}`);
+      svg.setAttribute("aria-label", `Kreisdiagramm zu ${fmtFrac(n, d)}`);
 
-      const cx = size/2, cy = size/2, r = size*0.48;
+      const cx = size / 2;
+      const cy = size / 2;
+      const r = size * 0.47;
 
-      // Optional: subtle background circle
       const bg = document.createElementNS(svg.namespaceURI, "circle");
-      bg.setAttribute("cx", cx); bg.setAttribute("cy", cy);
+      bg.setAttribute("cx", cx);
+      bg.setAttribute("cy", cy);
       bg.setAttribute("r", r);
-      bg.setAttribute("fill", "white");
-      bg.setAttribute("stroke", "#e5e7eb");
+      bg.setAttribute("fill", "#f8fbf9");
+      bg.setAttribute("stroke", "#d9e6dd");
       bg.setAttribute("stroke-width", "1");
       svg.appendChild(bg);
 
-      for(let k=0; k<d; k++){
-        const start = k * 360/d;
-        const end   = (k+1) * 360/d;
+      for (let k = 0; k < d; k++) {
+        const start = k * 360 / d;
+        const end = (k + 1) * 360 / d;
         const path = document.createElementNS(svg.namespaceURI, "path");
         path.setAttribute("d", sectorPath(cx, cy, r, start, end));
-        path.setAttribute("fill", k < n ? "url(#gradAccent)" : "#eef2f7");
-        path.setAttribute("stroke", "#d1d5db");
-        path.setAttribute("stroke-width", "0.5");
+        path.setAttribute("fill", k < n ? "url(#gradPie)" : "#ffffff");
+        path.setAttribute("stroke", "#d9e6dd");
+        path.setAttribute("stroke-width", "0.75");
         svg.appendChild(path);
       }
 
-      // Define a simple gradient for filled slices (once per document)
       ensureDefs(svg);
-
       return svg;
     }
 
-    function ensureDefs(svg){
+    function ensureDefs(svg) {
       const doc = svg.ownerDocument;
       let defs = doc.querySelector("defs#common-defs");
-      if(!defs){
+      if (!defs) {
         defs = document.createElementNS(svg.namespaceURI, "defs");
-        defs.setAttribute("id", "common-defs");
-        // gradient
+        defs.id = "common-defs";
+
         const grad = document.createElementNS(svg.namespaceURI, "linearGradient");
-        grad.setAttribute("id", "gradAccent");
-        grad.setAttribute("x1", "0"); grad.setAttribute("y1", "0");
-        grad.setAttribute("x2", "1"); grad.setAttribute("y2", "1");
+        grad.id = "gradPie";
+        grad.setAttribute("x1", "0");
+        grad.setAttribute("y1", "0");
+        grad.setAttribute("x2", "1");
+        grad.setAttribute("y2", "1");
+
         const s1 = document.createElementNS(svg.namespaceURI, "stop");
         s1.setAttribute("offset", "0%");
-        s1.setAttribute("stop-color", "#60a5fa"); // lighter blue
+        s1.setAttribute("stop-color", "#1b5e20");
         const s2 = document.createElementNS(svg.namespaceURI, "stop");
         s2.setAttribute("offset", "100%");
-        s2.setAttribute("stop-color", "#3b82f6"); // accent
-        grad.appendChild(s1); grad.appendChild(s2);
-        defs.appendChild(grad);
+        s2.setAttribute("stop-color", "#14532d");
 
+        grad.appendChild(s1);
+        grad.appendChild(s2);
+        defs.appendChild(grad);
         document.body.appendChild(defs);
       }
     }
 
-    // Rendering a single card element
-    function renderCard(card){
+    const boardEl = document.getElementById("board");
+    const feedbackEl = document.getElementById("feedback");
+    const movesEl = document.getElementById("moves");
+    const timeEl = document.getElementById("time");
+    const foundEl = document.getElementById("found");
+
+    const diffSel = document.getElementById("difficulty");
+    const modeSel = document.getElementById("mode");
+    const decimalToggle = document.getElementById("decimalToggle");
+    const btnNew = document.getElementById("newGame");
+
+    const turnChip = document.getElementById("turnChip");
+    const scoreP1 = document.getElementById("scoreP1");
+    const scoreP2 = document.getElementById("scoreP2");
+
+    const winBox = document.getElementById("win");
+    const resultHeadline = document.getElementById("resultHeadline");
+    const resTime = document.getElementById("resTime");
+    const resMoves = document.getElementById("resMoves");
+    const resScoreLine = document.getElementById("resScoreLine");
+    const resScore = document.getElementById("resScore");
+    const againBtn = document.getElementById("again");
+    const closeWinBtn = document.getElementById("closeWin");
+
+    let deck = [];
+    let first = null;
+    let second = null;
+    let lock = false;
+    let moves = 0;
+    let foundPairs = 0;
+    let totalPairs = 0;
+    let timer = null;
+    let startTs = null;
+
+    let currentPlayer = 1;
+    let score1 = 0;
+    let score2 = 0;
+
+    function isMultiMode() {
+      return modeSel.value === "multi";
+    }
+
+    function displayValue(n, d) {
+      return decimalToggle.checked ? fmtDecimal(n, d) : fmtFrac(n, d);
+    }
+
+    function renderCard(card) {
       const el = document.createElement("div");
       el.className = "card";
       el.dataset.id = card.id;
       el.dataset.pair = card.pair;
       el.dataset.type = card.type;
+      el.dataset.n = card.n;
+      el.dataset.d = card.d;
 
       const btn = document.createElement("button");
       btn.className = "inner";
-      btn.setAttribute("aria-label", card.type === "text" ? `Bruch ${card.label}` : `Kreisdiagramm zu ${card.label}`);
-      btn.setAttribute("type","button");
+      btn.type = "button";
+      btn.setAttribute("aria-label", card.type === "text" ? "Zahlendarstellung" : "Kreisdiagramm");
 
       const front = document.createElement("div");
       front.className = "face front";
       const back = document.createElement("div");
       back.className = "face back";
 
-      if(card.type === "text"){
+      if (card.type === "text") {
         const t = document.createElement("div");
         t.className = "fractext";
-        t.innerHTML = `${card.n}<span class="sr-only"> durch </span>/<span class="sr-only"> </span>${card.d}<small>Bruch</small>`;
+        t.innerHTML = `<span class="card-value">${displayValue(card.n, card.d)}</span>`;
         back.appendChild(t);
-      }else{
+      } else {
         const w = document.createElement("div");
         w.className = "piewrap";
-        w.appendChild(makePieSVG(card.n, card.d, 86));
+        w.appendChild(makePieSVG(card.n, card.d));
         back.appendChild(w);
-        const lg = document.createElement("div");
-        lg.className = "legend";
-        lg.textContent = fmtFrac(card.n, card.d);
-        back.appendChild(lg);
       }
 
       btn.appendChild(front);
@@ -393,152 +587,267 @@ Hier ist ein kompaktes, eigenständiges HTML-Applet für ein Brüche-Memory. Es 
       return el;
     }
 
-    // Game state
-    const boardEl = document.getElementById("board");
-    const feedbackEl = document.getElementById("feedback");
-    const movesEl = document.getElementById("moves");
-    const timeEl = document.getElementById("time");
-    const foundEl = document.getElementById("found");
-    const diffSel = document.getElementById("difficulty");
-    const btnNew = document.getElementById("newGame");
-    const winBox = document.getElementById("win");
-    const resTime = document.getElementById("resTime");
-    const resMoves = document.getElementById("resMoves");
-    const againBtn = document.getElementById("again");
-    const closeWin = document.getElementById("closeWin");
+    function refreshDisplayedValues() {
+      boardEl.querySelectorAll(".card").forEach(cardEl => {
+        const n = Number(cardEl.dataset.n);
+        const d = Number(cardEl.dataset.d);
+        const value = displayValue(n, d);
+        if (cardEl.dataset.type === "text") {
+          const valueNode = cardEl.querySelector(".card-value");
+          if (valueNode) valueNode.textContent = value;
+        }
+      });
+    }
 
-    let deck = [];
-    let first = null, second = null, lock = false;
-    let moves = 0, foundPairs = 0, totalPairs = 0;
-    let timer = null, startTs = null;
-
-    function resetStats(){
-      moves = 0; foundPairs = 0;
-      movesEl.textContent = "0";
-      foundEl.textContent = "0";
-      timeEl.textContent = "00:00";
-      feedbackEl.textContent = "";
-      stopTimer();
-    }
-    function startTimer(){
-      startTs = Date.now();
-      timer = setInterval(()=>{
-        const t = Math.floor((Date.now()-startTs)/1000);
-        timeEl.textContent = fmtTime(t);
-      }, 200);
-    }
-    function stopTimer(){
-      if(timer){ clearInterval(timer); timer = null; }
-    }
-    function fmtTime(sec){
-      const m = Math.floor(sec/60).toString().padStart(2,"0");
-      const s = (sec%60).toString().padStart(2,"0");
+    function fmtTime(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, "0");
+      const s = (sec % 60).toString().padStart(2, "0");
       return `${m}:${s}`;
     }
 
-    function setupGame(){
-      resetStats();
-      const cfg = DIFF_CONFIG[diffSel.value];
-      const pool = buildPool(cfg.denoms);
-      const chosen = sampleUnique(pool, cfg.pairs);
-      totalPairs = chosen.length;
-      deck = buildDeck(chosen);
-
-      boardEl.innerHTML = "";
-      deck.forEach(card => {
-        const el = renderCard(card);
-        boardEl.appendChild(el);
-      });
-
-      // Attach listeners
-      boardEl.querySelectorAll(".card .inner").forEach(btn => {
-        btn.addEventListener("click", onCardClick);
-      });
-
-      // start timer at first flip
-      startTs = null;
+    function startTimer() {
+      startTs = Date.now();
+      timer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTs) / 1000);
+        timeEl.textContent = fmtTime(elapsed);
+      }, 250);
     }
 
-    function onCardClick(e){
-      if(lock) return;
-      const btn = e.currentTarget;
-      const cardEl = btn.closest(".card");
-      if(cardEl.classList.contains("flipped") || cardEl.classList.contains("matched")) return;
-
-      // flip
-      cardEl.classList.add("flipped");
-      if(!startTs){ startTimer(); }
-
-      const card = {
-        el: cardEl,
-        pair: cardEl.dataset.pair,
-        type: cardEl.dataset.type,
-        label: cardEl.querySelector(".legend") ? cardEl.querySelector(".legend").textContent : cardEl.querySelector(".fractext")?.textContent
-      };
-
-      if(!first){
-        first = card;
-        feedback("");
-      }else if(!second){
-        second = card;
-        moves++; movesEl.textContent = String(moves);
-        checkMatch();
+    function stopTimer() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
       }
     }
 
-    function checkMatch(){
-      if(!first || !second) return;
+    function updateStats() {
+      movesEl.textContent = String(moves);
+      foundEl.textContent = String(foundPairs);
+      scoreP1.querySelector("strong").textContent = String(score1);
+      scoreP2.querySelector("strong").textContent = String(score2);
+
+      if (isMultiMode()) {
+        turnChip.style.display = "inline-flex";
+        scoreP1.style.display = "inline-flex";
+        scoreP2.style.display = "inline-flex";
+        turnChip.textContent = `Am Zug: Spieler ${currentPlayer}`;
+      } else {
+        turnChip.style.display = "none";
+        scoreP1.style.display = "none";
+        scoreP2.style.display = "none";
+      }
+    }
+
+    function setFeedback(msg, type = "neutral") {
+      feedbackEl.className = `status ${type}`;
+      feedbackEl.textContent = msg;
+    }
+
+    function resetPick() {
+      first = null;
+      second = null;
+    }
+
+    function switchPlayer() {
+      currentPlayer = currentPlayer === 1 ? 2 : 1;
+      updateStats();
+    }
+
+    function sizeConfettiCanvas() {
+      const canvas = document.getElementById("confetti");
+      const DPR = Math.max(1, window.devicePixelRatio || 1);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      canvas.width = Math.floor(w * DPR);
+      canvas.height = Math.floor(h * DPR);
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      return { canvas, ctx, w, h };
+    }
+
+    function createConfettiBurst() {
+      const { ctx, w, h } = sizeConfettiCanvas();
+
+      const colors = ["#22c55e", "#10b981", "#3b82f6", "#f59e0b", "#ec4899"];
+      const particles = Array.from({ length: 180 }, () => ({
+        x: Math.random() * w,
+        y: -20 - Math.random() * (h * 0.35),
+        vx: -2.5 + Math.random() * 5,
+        vy: 2 + Math.random() * 4,
+        size: 3 + Math.random() * 6,
+        rot: Math.random() * Math.PI,
+        vr: -0.25 + Math.random() * 0.5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 110 + Math.floor(Math.random() * 30)
+      }));
+
+      let frame = 0;
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.03;
+          p.rot += p.vr;
+          p.life -= 1;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        });
+
+        frame += 1;
+        if (frame < 130) {
+          requestAnimationFrame(draw);
+        } else {
+          ctx.clearRect(0, 0, w, h);
+        }
+      }
+      draw();
+    }
+
+    function finishGame() {
+      stopTimer();
+      const elapsed = startTs ? Math.floor((Date.now() - startTs) / 1000) : 0;
+      resTime.textContent = fmtTime(elapsed);
+      resMoves.textContent = String(moves);
+
+      if (isMultiMode()) {
+        const scoreText = `Spieler 1: ${score1} | Spieler 2: ${score2}`;
+        resScoreLine.style.display = "list-item";
+        resScore.textContent = scoreText;
+
+        if (score1 > score2) {
+          resultHeadline.textContent = "Spieler 1 gewinnt!";
+        } else if (score2 > score1) {
+          resultHeadline.textContent = "Spieler 2 gewinnt!";
+        } else {
+          resultHeadline.textContent = "Unentschieden!";
+        }
+      } else {
+        resultHeadline.textContent = "Du hast alle Paare gefunden.";
+        resScoreLine.style.display = "none";
+      }
+
+      winBox.style.display = "flex";
+    }
+
+    function checkMatch() {
+      if (!first || !second) return;
       lock = true;
       const isSamePair = first.pair === second.pair;
       const differentTypes = first.type !== second.type;
 
-      if(isSamePair && differentTypes){
-        // match
-        setTimeout(()=>{
+      if (isSamePair && differentTypes) {
+        setTimeout(() => {
           first.el.classList.add("matched");
           second.el.classList.add("matched");
-          foundPairs++; foundEl.textContent = String(foundPairs);
-          feedback("Richtig!", "good");
+          foundPairs += 1;
+          if (isMultiMode()) {
+            if (currentPlayer === 1) score1 += 1;
+            else score2 += 1;
+            setFeedback(`Treffer! Spieler ${currentPlayer} bekommt einen Punkt und bleibt am Zug.`, "good");
+          } else {
+            setFeedback("Richtig zugeordnet! Super!", "good");
+          }
+
+          createConfettiBurst();
+          updateStats();
           resetPick();
           lock = false;
-          if(foundPairs === totalPairs){
-            stopTimer();
-            const elapsed = Math.floor((Date.now()-startTs)/1000);
-            resTime.textContent = fmtTime(elapsed);
-            resMoves.textContent = String(moves);
-            winBox.style.display = "flex";
+
+          if (foundPairs === totalPairs) {
+            finishGame();
           }
-        }, 250);
-      }else{
-        // not a match
-        feedback("Leider nicht. Versuche es erneut.", "bad");
-        setTimeout(()=>{
+        }, 220);
+      } else {
+        setFeedback("Nicht passend. Die Karten drehen sich in 3 Sekunden zurück.", "bad");
+        setTimeout(() => {
           first.el.classList.remove("flipped");
           second.el.classList.remove("flipped");
+          if (isMultiMode()) switchPlayer();
           resetPick();
           lock = false;
-        }, 800);
+        }, 3000);
       }
     }
 
-    function resetPick(){
-      first = null; second = null;
+    function onCardClick(e) {
+      if (lock) return;
+      const cardEl = e.currentTarget.closest(".card");
+      if (!cardEl || cardEl.classList.contains("flipped") || cardEl.classList.contains("matched")) return;
+
+      cardEl.classList.add("flipped");
+      if (!startTs) startTimer();
+
+      const cardObj = {
+        el: cardEl,
+        pair: cardEl.dataset.pair,
+        type: cardEl.dataset.type
+      };
+
+      if (!first) {
+        first = cardObj;
+      } else if (!second) {
+        second = cardObj;
+        moves += 1;
+        updateStats();
+        checkMatch();
+      }
     }
 
-    function feedback(msg, cls){
-      feedbackEl.className = "status" + (cls ? " " + cls : "");
-      feedbackEl.textContent = msg || "";
+    function resetStats() {
+      moves = 0;
+      foundPairs = 0;
+      first = null;
+      second = null;
+      lock = false;
+      currentPlayer = 1;
+      score1 = 0;
+      score2 = 0;
+      timeEl.textContent = "00:00";
+      stopTimer();
+      startTs = null;
+      setFeedback("Viel Erfolg!", "neutral");
+      updateStats();
     }
 
-    btnNew.addEventListener("click", ()=>{ winBox.style.display="none"; setupGame(); });
+    function setupGame() {
+      winBox.style.display = "none";
+      resetStats();
+
+      const cfg = DIFF_CONFIG[diffSel.value];
+      const pool = buildPool(cfg.denoms);
+      const selected = sampleUnique(pool, cfg.pairs);
+      totalPairs = selected.length;
+      deck = buildDeck(selected);
+
+      boardEl.innerHTML = "";
+      deck.forEach(card => boardEl.appendChild(renderCard(card)));
+      boardEl.querySelectorAll(".card .inner").forEach(btn => btn.addEventListener("click", onCardClick));
+
+      refreshDisplayedValues();
+    }
+
+    btnNew.addEventListener("click", setupGame);
     diffSel.addEventListener("change", setupGame);
-    againBtn.addEventListener("click", ()=>{ winBox.style.display="none"; setupGame(); });
-    closeWin.addEventListener("click", ()=>{ winBox.style.display="none"; });
+    modeSel.addEventListener("change", setupGame);
+    decimalToggle.addEventListener("change", refreshDisplayedValues);
 
-    // Init
+    againBtn.addEventListener("click", setupGame);
+    closeWinBtn.addEventListener("click", () => {
+      winBox.style.display = "none";
+    });
+
+    window.addEventListener("resize", sizeConfettiCanvas);
+
+    sizeConfettiCanvas();
     setupGame();
   </script>
 </body>
 </html>
-
- Code kopieren
