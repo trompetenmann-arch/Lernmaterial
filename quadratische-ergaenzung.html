@@ -345,7 +345,7 @@
       {
         title: "Seitenlänge bestimmen durch Wurzel ziehen",
         equation: "x + 5 = 8  ⇒  x = 3",
-        text: "Aus (x+5)² = 64 wählen wir hier die positive Seitenlänge: x+5 = 8. Danach 5 subtrahieren: x = 3.",
+        text: "Aus (x+5)² = 64 wählen folgern wir für die Seitenlänge des grünen Quadrats: x+5 = 8. Danach subtrahieren wir 5 und erhalten: x = 3.",
         hint: "Die Seitenlänge eines Quadrats ist positiv. Deshalb betrachten wir hier +8.",
         question: {
           prompt: "Welcher Schritt folgt auf x + 5 = 8?",
@@ -380,8 +380,7 @@
     function highlightEquation(eq) {
       // Wichtige Teile farblich betonen, damit Beziehungen schneller erkannt werden.
       return eq
-                .replace("25", "<mark>25</mark>")
-        ;
+                ;
     }
 
     function renderQuestion(q) {
@@ -505,7 +504,6 @@
       txt(ox + xLen + 30, oy + xLen / 2, "10x", 14, "#7f1d1d");
       txt(22, 36, "Start: x² + 10x = 39", 15, "#1d4ed8");
       drawUnitSquares39(35, 295, 14);
-      txt(22, 285, "39 Einheitsquadrate (ungeordnet)", 13, "#334155");
     }
 
 
@@ -535,8 +533,8 @@
       rect(ox, oy + xLen, xLen, halfB, "#fecaca", "#7f1d1d");
 
       // Ergänzungsquadrat 25
-      rect(ox + xLen, oy + xLen, halfB, halfB, "#e5e7eb", "#475569");
-      txt(ox + xLen + 14, oy + xLen + 30, "25", 15, "#334155");
+      rect(ox + xLen, oy + xLen, halfB, halfB, "#fde68a", "#92400e");
+      txt(ox + xLen + 14, oy + xLen + 30, "25", 15, "#92400e");
       txt(22, 34, "Ergänzung: 5 · 5 = 25", 15, "#1d4ed8");
     }
 
@@ -568,7 +566,7 @@
       txt(ox + fullSide / 2 - 5, oy - 10, "8", 14, "#14532d");
       txt(ox - 20, oy + fullSide / 2, "8", 14, "#14532d");
       txt(24, 34, "(x + 5)² = 64  ⇒  x + 5 = 8", 15, "#1d4ed8");
-      txt(24, 300, "Daraus: x = 3", 18, "#0f766e");
+      txt(24, 388, "Daraus folgt: x = 3", 18, "#0f766e");
     }
 
     prevBtn.addEventListener("click", () => {
