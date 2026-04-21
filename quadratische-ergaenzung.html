@@ -211,21 +211,17 @@
     <section class="intro">
       <h1>Quadratische Ergänzung über Flächen verstehen</h1>
       <p>
-        Wir lösen gemeinsam die Gleichung <strong>x² + 10x − 39 = 0</strong>.
+        Wir starten direkt mit der Gleichung <strong>x² + 10x = 39</strong>.
         Dabei nutzen wir ein Flächenmodell: <strong>x²</strong> ist ein Quadrat,
         <strong>10x</strong> sind Rechtecke, und durch sinnvolles Ergänzen entsteht ein vollständiges Quadrat.
-      </p>
-      <p class="small">
-        Ziel: Nicht nur Rechenschritte auswendig lernen, sondern verstehen,
-        <em>warum</em> wir bei <strong>x² + 10x</strong> genau <strong>25</strong> ergänzen.
       </p>
     </section>
 
     <section class="panel layout">
       <div>
-        <span class="badge" id="stepIndicator">Schritt 1 von 6</span>
+        <span class="badge" id="stepIndicator">Schritt 1 von 5</span>
         <h2 id="stepHeading">Startgleichung anschauen</h2>
-        <div class="equation-box" id="equationBox">x² + 10x − 39 = 0</div>
+        <div class="equation-box" id="equationBox">x² + 10x = 39</div>
         <p class="step-text" id="stepText"></p>
 
         <div class="question" id="questionBox" aria-live="polite"></div>
@@ -257,14 +253,13 @@
         Wir haben die Gleichung über das Flächenmodell ergänzt:
       </p>
       <div class="equation-box">
-        x² + 10x − 39 = 0<br>
         x² + 10x = 39<br>
         x² + 10x + 25 = 39 + 25<br>
         (x + 5)² = 64<br>
-        x + 5 = ±8<br>
-        x = 3 oder x = -13
+        x + 5 = 8<br>
+        x = 3
       </div>
-      <div class="final-solution">Lösung: <strong>x₁ = 3</strong> und <strong>x₂ = -13</strong>.</div>
+      <div class="final-solution">Lösung: <strong>x = 3</strong>.</div>
       <p class="small">Merksatz: Bei x² + bx ergänzt man immer (b/2)².</p>
     </section>
   </main>
@@ -293,8 +288,8 @@
     const steps = [
       {
         title: "Startgleichung anschauen",
-        equation: "x² + 10x − 39 = 0",
-        text: "Wir betrachten zuerst die Terme links als Flächen: x² ist ein Quadrat, 10x ist eine rechteckige Zusatzfläche.",
+        equation: "x² + 10x = 39",
+        text: "Wir betrachten die Terme links als Flächen: x² ist ein Quadrat, 10x ist eine rechteckige Zusatzfläche. Rechts steht der Vergleichswert 39.",
         hint: "Denk an Längen: x² bedeutet 'x mal x'. Das ist die Fläche eines Quadrats mit Seitenlänge x.",
         question: {
           prompt: "Was beschreibt der Term x² im Flächenmodell?",
@@ -306,27 +301,13 @@
         draw: drawStep1
       },
       {
-        title: "Konstante auf die andere Seite bringen",
-        equation: "x² + 10x = 39",
-        text: "Jetzt isolieren wir die x-Terme: Wir addieren 39 auf beiden Seiten. Links bleibt nur x² + 10x.",
-        hint: "Wir wollen links eine Form erzeugen, die zu einem Quadrat ergänzt werden kann.",
-        question: {
-          prompt: "Warum ist x² + 10x jetzt der wichtige Teil?",
-          options: ["Weil daraus ein binomisches Quadrat entstehen kann", "Weil 39 eine Primzahl ist", "Weil x dann automatisch 0 ist"],
-          correct: 0,
-          good: "Richtig! Genau diesen Ausdruck können wir zum vollständigen Quadrat ergänzen.",
-          bad: "Der Kern ist: x² + 10x kann durch Ergänzen in (x+5)² umgeformt werden."
-        },
-        draw: drawStep2
-      },
-      {
         title: "10x in zwei gleiche Rechtecke teilen",
         equation: "x² + 5x + 5x = 39",
         text: "Die 10x-Fläche wird in zwei gleich große Rechtecke (je 5x) geteilt. So können wir sie an zwei Seiten des x²-Quadrats anlegen.",
         hint: "5x bedeutet: Rechteck mit Seiten 5 und x. Davon brauchen wir zwei Stück.",
         question: {
           prompt: "Warum teilen wir 10x in 5x + 5x?",
-          options: ["Damit links und oben je ein Rechteck ergänzt werden kann", "Damit x verschwindet", "Nur zur Dekoration"],
+          options: ["Damit rechts und unten je ein Rechteck ergänzt werden kann.", "Damit x verschwindet", "Nur zur Dekoration"],
           correct: 0,
           good: "Genau! So entsteht fast ein großes Quadrat.",
           bad: "Die Teilung hilft, die Flächen sinnvoll um das x²-Quadrat anzuordnen."
@@ -362,16 +343,16 @@
         draw: drawStep5
       },
       {
-        title: "Wurzel ziehen und lösen",
-        equation: "x + 5 = ±8  ⇒  x = 3 oder x = -13",
-        text: "Aus (x+5)² = 64 folgt x+5 = ±8. Danach 5 subtrahieren: x = 3 oder x = -13.",
-        hint: "Beim Wurzelziehen aus einer Quadratzahl gibt es zwei Möglichkeiten: + und -.",
+        title: "Seitenlänge bestimmen durch Wurzel ziehen",
+        equation: "x + 5 = 8  ⇒  x = 3",
+        text: "Aus (x+5)² = 64 wählen wir hier die positive Seitenlänge: x+5 = 8. Danach 5 subtrahieren: x = 3.",
+        hint: "Die Seitenlänge eines Quadrats ist positiv. Deshalb betrachten wir hier +8.",
         question: {
-          prompt: "Warum steht hier ±8 und nicht nur 8?",
-          options: ["Weil sowohl 8² als auch (-8)² gleich 64 sind", "Weil 64 gerade ist", "Weil x negativ sein muss"],
+          prompt: "Welcher Schritt folgt auf x + 5 = 8?",
+          options: ["Auf beiden Seiten 5 abziehen", "Auf beiden Seiten 5 addieren", "Durch 8 teilen"],
           correct: 0,
-          good: "Sehr gut! Beide Zahlen liefern beim Quadrieren 64.",
-          bad: "Denk an das Quadrieren: positive und negative Zahl können dieselbe Quadratzahl haben."
+          good: "Richtig! Dann erhältst du direkt x = 3.",
+          bad: "Fast: Um x freizustellen, ziehst du 5 auf beiden Seiten ab."
         },
         draw: drawStep6
       }
@@ -399,8 +380,7 @@
     function highlightEquation(eq) {
       // Wichtige Teile farblich betonen, damit Beziehungen schneller erkannt werden.
       return eq
-        .replace("10x", "<mark>10x</mark>")
-        .replace("25", "<mark>25</mark>")
+                .replace("25", "<mark>25</mark>")
         .replace("(x + 5)²", "<mark>(x + 5)²</mark>");
     }
 
@@ -503,20 +483,12 @@
       const ox = 60, oy = 90;
       drawXSquare(ox, oy);
       rect(ox + xLen, oy, halfB, xLen, "#fecaca", "#7f1d1d", 0.55);
-      txt(ox + xLen + 35, oy + xLen / 2, "10x", 14, "#7f1d1d");
-      txt(24, 38, "Idee: x² und 10x als Flächen lesen", 15, "#1d4ed8");
-    }
-
-    function drawStep2() {
-      clearSvg();
-      const ox = 60, oy = 90;
-      drawXSquare(ox, oy);
-      rect(ox + xLen, oy, halfB, xLen, "#fecaca", "#7f1d1d", 0.55);
       txt(ox + xLen + 30, oy + xLen / 2, "10x", 14, "#7f1d1d");
-      txt(22, 36, "39 steht rechts als Vergleichsfläche", 15, "#1d4ed8");
+      txt(22, 36, "Start: x² + 10x = 39", 15, "#1d4ed8");
       dashedRect(280, 100, 110, 110);
       txt(316, 158, "39", 18, "#0f172a");
     }
+
 
     function drawStep3() {
       clearSvg();
@@ -563,8 +535,8 @@
       rect(ox + xLen, oy + xLen, halfB, halfB, "#fde68a", "#92400e", 0.95);
 
       txt(ox + 52, oy + 85, "(x + 5)²", 18, "#14532d");
-      txt(ox + (xLen + halfB) / 2 - 20, oy - 8, "x + 5", 14, "#14532d");
-      txt(ox - 28, oy + (xLen + halfB) / 2, "x + 5", 14, "#14532d");
+      txt(ox + (xLen + halfB) / 2 - 20, oy - 20, "x + 5", 14, "#14532d");
+      txt(ox - 46, oy + (xLen + halfB) / 2, "x + 5", 14, "#14532d");
       txt(20, 34, "Jetzt ist es ein vollständiges Quadrat", 15, "#1d4ed8");
     }
 
@@ -575,8 +547,8 @@
       txt(ox + 48, oy + 86, "Fläche 64", 17, "#14532d");
       txt(ox + 56, oy - 8, "8", 14, "#14532d");
       txt(ox - 20, oy + 84, "8", 14, "#14532d");
-      txt(24, 34, "(x + 5)² = 64  ⇒  x + 5 = ±8", 15, "#1d4ed8");
-      txt(24, 290, "Daraus: x = 3 oder x = -13", 18, "#0f766e");
+      txt(24, 34, "(x + 5)² = 64  ⇒  x + 5 = 8", 15, "#1d4ed8");
+      txt(24, 290, "Daraus: x = 3", 18, "#0f766e");
     }
 
     prevBtn.addEventListener("click", () => {
