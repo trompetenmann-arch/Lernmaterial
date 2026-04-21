@@ -151,7 +151,8 @@
 
     .card {
       perspective: 900px;
-      height: 142px;
+      height: auto;
+      aspect-ratio: 1 / 1;
       position: relative;
     }
 
@@ -492,10 +493,10 @@
 
         const s1 = document.createElementNS(svg.namespaceURI, "stop");
         s1.setAttribute("offset", "0%");
-        s1.setAttribute("stop-color", "#1b5e20");
+        s1.setAttribute("stop-color", "#0f3d1b");
         const s2 = document.createElementNS(svg.namespaceURI, "stop");
         s2.setAttribute("offset", "100%");
-        s2.setAttribute("stop-color", "#14532d");
+        s2.setAttribute("stop-color", "#0b2f15");
 
         grad.appendChild(s1);
         grad.appendChild(s2);
