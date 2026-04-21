@@ -158,9 +158,12 @@
     .card button {
       width: 100%;
       height: 100%;
-      border: none;
+      border: 0;
       padding: 0;
+      margin: 0;
       background: transparent;
+      border-radius: 0;
+      display: block;
     }
 
     .inner {
@@ -216,29 +219,9 @@
       text-align: center;
     }
 
-    .fractext small {
-      display: block;
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
     .piewrap {
       width: 92px;
       height: 92px;
-    }
-
-    .legend {
-      position: absolute;
-      right: 8px;
-      bottom: 7px;
-      color: #475569;
-      font-size: 12px;
-      font-weight: 600;
-      background: rgba(255,255,255,.82);
-      padding: 2px 5px;
-      border-radius: 6px;
     }
 
     .footer {
@@ -483,8 +466,8 @@
         const end = (k + 1) * 360 / d;
         const path = document.createElementNS(svg.namespaceURI, "path");
         path.setAttribute("d", sectorPath(cx, cy, r, start, end));
-        path.setAttribute("fill", k < n ? "url(#gradPie)" : "var(--pie-empty)");
-        path.setAttribute("stroke", "#d2dfd6");
+        path.setAttribute("fill", k < n ? "url(#gradPie)" : "#ffffff");
+        path.setAttribute("stroke", "#d9e6dd");
         path.setAttribute("stroke-width", "0.75");
         svg.appendChild(path);
       }
@@ -509,10 +492,10 @@
 
         const s1 = document.createElementNS(svg.namespaceURI, "stop");
         s1.setAttribute("offset", "0%");
-        s1.setAttribute("stop-color", "#4ade80");
+        s1.setAttribute("stop-color", "#1b5e20");
         const s2 = document.createElementNS(svg.namespaceURI, "stop");
         s2.setAttribute("offset", "100%");
-        s2.setAttribute("stop-color", "#16a34a");
+        s2.setAttribute("stop-color", "#14532d");
 
         grad.appendChild(s1);
         grad.appendChild(s2);
@@ -567,10 +550,6 @@
       return decimalToggle.checked ? fmtDecimal(n, d) : fmtFrac(n, d);
     }
 
-    function formatTypeCaption() {
-      return decimalToggle.checked ? "Dezimalzahl" : "Bruch";
-    }
-
     function renderCard(card) {
       const el = document.createElement("div");
       el.className = "card";
@@ -593,18 +572,13 @@
       if (card.type === "text") {
         const t = document.createElement("div");
         t.className = "fractext";
-        t.innerHTML = `<span class="card-value">${displayValue(card.n, card.d)}</span><small>${formatTypeCaption()}</small>`;
+        t.innerHTML = `<span class="card-value">${displayValue(card.n, card.d)}</span>`;
         back.appendChild(t);
       } else {
         const w = document.createElement("div");
         w.className = "piewrap";
         w.appendChild(makePieSVG(card.n, card.d));
         back.appendChild(w);
-
-        const lg = document.createElement("div");
-        lg.className = "legend";
-        lg.textContent = displayValue(card.n, card.d);
-        back.appendChild(lg);
       }
 
       btn.appendChild(front);
@@ -620,12 +594,7 @@
         const value = displayValue(n, d);
         if (cardEl.dataset.type === "text") {
           const valueNode = cardEl.querySelector(".card-value");
-          const caption = cardEl.querySelector("small");
           if (valueNode) valueNode.textContent = value;
-          if (caption) caption.textContent = formatTypeCaption();
-        } else {
-          const legend = cardEl.querySelector(".legend");
-          if (legend) legend.textContent = value;
         }
       });
     }
@@ -684,29 +653,34 @@
       updateStats();
     }
 
-    function createConfettiBurst() {
+    function sizeConfettiCanvas() {
       const canvas = document.getElementById("confetti");
-      const ctx = canvas.getContext("2d");
       const DPR = Math.max(1, window.devicePixelRatio || 1);
-
-      const rect = canvas.getBoundingClientRect();
-      const w = rect.width || window.innerWidth;
-      const h = rect.height || window.innerHeight;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
       canvas.width = Math.floor(w * DPR);
       canvas.height = Math.floor(h * DPR);
+      const ctx = canvas.getContext("2d");
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      return { canvas, ctx, w, h };
+    }
+
+    function createConfettiBurst() {
+      const { ctx, w, h } = sizeConfettiCanvas();
 
       const colors = ["#22c55e", "#10b981", "#3b82f6", "#f59e0b", "#ec4899"];
-      const particles = Array.from({ length: 70 }, () => ({
+      const particles = Array.from({ length: 180 }, () => ({
         x: Math.random() * w,
-        y: -8 - Math.random() * 40,
-        vx: -2 + Math.random() * 4,
-        vy: 2 + Math.random() * 3,
-        size: 4 + Math.random() * 4,
+        y: -20 - Math.random() * (h * 0.35),
+        vx: -2.5 + Math.random() * 5,
+        vy: 2 + Math.random() * 4,
+        size: 3 + Math.random() * 6,
         rot: Math.random() * Math.PI,
-        vr: -0.2 + Math.random() * 0.4,
+        vr: -0.25 + Math.random() * 0.5,
         color: colors[Math.floor(Math.random() * colors.length)],
-        life: 70 + Math.floor(Math.random() * 25)
+        life: 110 + Math.floor(Math.random() * 30)
       }));
 
       let frame = 0;
@@ -728,7 +702,7 @@
         });
 
         frame += 1;
-        if (frame < 90) {
+        if (frame < 130) {
           requestAnimationFrame(draw);
         } else {
           ctx.clearRect(0, 0, w, h);
@@ -870,12 +844,9 @@
       winBox.style.display = "none";
     });
 
-    window.addEventListener("resize", () => {
-      const conf = document.getElementById("confetti");
-      conf.width = window.innerWidth;
-      conf.height = window.innerHeight;
-    });
+    window.addEventListener("resize", sizeConfettiCanvas);
 
+    sizeConfettiCanvas();
     setupGame();
   </script>
 </body>
