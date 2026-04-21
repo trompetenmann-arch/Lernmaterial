@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quadratische Ergänzung anschaulich</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #4b5563;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --accent: #0f766e;
+      --warn: #b45309;
+      --ok: #166534;
+      --border: #d1d5db;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    h1, h2, h3 { margin: 0.2rem 0 0.7rem; }
+
+    .intro,
+    .panel,
+    .summary {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .equation-box {
+      padding: 0.8rem;
+      border-radius: 10px;
+      background: var(--primary-soft);
+      border: 1px solid #bfdbfe;
+      margin: 0.6rem 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .equation-box mark {
+      background: #fde68a;
+      padding: 0.05rem 0.2rem;
+      border-radius: 4px;
+    }
+
+    .step-title {
+      display: inline-block;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.4rem;
+    }
+
+    .step-text { color: var(--text); }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 0.8rem;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-secondary { background: #e5e7eb; color: #111827; }
+    .btn-hint { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      display: none;
+      margin-top: 0.7rem;
+      background: #fffbeb;
+      border-left: 5px solid #f59e0b;
+      padding: 0.7rem;
+      border-radius: 8px;
+      color: #78350f;
+    }
+
+    .hint.show { display: block; }
+
+    .question {
+      margin-top: 0.8rem;
+      background: #f9fafb;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 0.7rem;
+    }
+
+    .question label {
+      display: block;
+      margin: 0.2rem 0;
+      cursor: pointer;
+    }
+
+    .feedback {
+      margin-top: 0.4rem;
+      font-weight: 600;
+    }
+
+    .feedback.ok { color: var(--ok); }
+    .feedback.warn { color: var(--warn); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 0.4rem;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      border: 1px solid rgba(0,0,0,0.2);
+      display: inline-block;
+    }
+
+    .vis-wrap {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      background: #fbfdff;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #ecfeff;
+      color: #155e75;
+      border: 1px solid #a5f3fc;
+      border-radius: 999px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .final-solution {
+      background: #ecfdf5;
+      border: 1px solid #86efac;
+      border-radius: 10px;
+      padding: 0.8rem;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="intro">
+      <h1>Quadratische Ergänzung über Flächen verstehen</h1>
+      <p>
+        Wir starten direkt mit der Gleichung <strong>x² + 10x = 39</strong>.
+        Dabei nutzen wir ein Flächenmodell: <strong>x²</strong> ist ein Quadrat,
+        <strong>10x</strong> sind Rechtecke, und durch sinnvolles Ergänzen entsteht ein vollständiges Quadrat.
+      </p>
+    </section>
+
+    <section class="panel layout">
+      <div>
+        <span class="badge" id="stepIndicator">Schritt 1 von 5</span>
+        <h2 id="stepHeading">Startgleichung anschauen</h2>
+        <div class="equation-box" id="equationBox">x² + 10x = 39</div>
+        <p class="step-text" id="stepText"></p>
+
+        <div class="question" id="questionBox" aria-live="polite"></div>
+
+        <div class="controls">
+          <button class="btn-secondary" id="prevBtn" disabled>Zurück</button>
+          <button class="btn-primary" id="nextBtn">Weiter</button>
+          <button class="btn-hint" id="hintBtn">Hinweis einblenden</button>
+        </div>
+
+        <div class="hint" id="hintBox"></div>
+      </div>
+
+      <div class="vis-wrap">
+        <h3>Flächenmodell</h3>
+        <svg id="areaSvg" viewBox="0 0 420 420" role="img" aria-label="Visualisierung der quadratischen Ergänzung"></svg>
+        <div class="legend">
+          <span class="legend-item"><span class="swatch" style="background:#bfdbfe"></span>x²-Fläche</span>
+          <span class="legend-item"><span class="swatch" style="background:#fecaca"></span>10x-Fläche</span>
+          <span class="legend-item"><span class="swatch" style="background:#fde68a"></span>ergänzte 25</span>
+          <span class="legend-item"><span class="swatch" style="background:#dcfce7"></span>fertiges Quadrat</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="summary" id="summary" hidden>
+      <h2>Zusammenfassung</h2>
+      <p>
+        Wir haben die Gleichung über das Flächenmodell ergänzt:
+      </p>
+      <div class="equation-box">
+        x² + 10x = 39<br>
+        x² + 10x + 25 = 39 + 25<br>
+        (x + 5)² = 64<br>
+        x + 5 = 8<br>
+        x = 3
+      </div>
+      <div class="final-solution">Lösung: <strong>x = 3</strong>.</div>
+      <p class="small">Merksatz: Bei x² + bx ergänzt man immer (b/2)².</p>
+    </section>
+  </main>
+
+  <script>
+    // Maßstab für die Zeichnung:
+    // Wir setzen x = 8 Längeneinheiten, damit das Modell gut ins SVG passt.
+    const scale = 20;
+    const xLen = 8 * scale;
+    const halfB = 5 * scale; // b/2 = 5
+
+    const svg = document.getElementById("areaSvg");
+    const stepHeading = document.getElementById("stepHeading");
+    const stepText = document.getElementById("stepText");
+    const equationBox = document.getElementById("equationBox");
+    const stepIndicator = document.getElementById("stepIndicator");
+    const hintBox = document.getElementById("hintBox");
+    const questionBox = document.getElementById("questionBox");
+    const summary = document.getElementById("summary");
+
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const hintBtn = document.getElementById("hintBtn");
+
+    // Didaktische Schritte: Jeder Schritt enthält Text, Gleichung, Hinweis und Frage.
+    const steps = [
+      {
+        title: "Startgleichung anschauen",
+        equation: "x² + 10x = 39",
+        text: "Wir betrachten die Terme links als Flächen: x² ist ein Quadrat, 10x ist eine rechteckige Zusatzfläche. Rechts steht der Vergleichswert 39.",
+        hint: "Denk an Längen: x² bedeutet 'x mal x'. Das ist die Fläche eines Quadrats mit Seitenlänge x.",
+        question: {
+          prompt: "Was beschreibt der Term x² im Flächenmodell?",
+          options: ["Ein Quadrat mit Seitenlänge x", "Zwei Rechtecke mit Länge 10", "Eine Linie mit Länge x²"],
+          correct: 0,
+          good: "Genau! x² ist die Fläche eines Quadrats mit Seitenlänge x.",
+          bad: "Noch nicht. x² bedeutet x·x, also eine Quadratfläche."
+        },
+        draw: drawStep1
+      },
+      {
+        title: "10x in zwei gleiche Rechtecke teilen",
+        equation: "x² + 5x + 5x = 39",
+        text: "Die 10x-Fläche wird in zwei gleich große Rechtecke (je 5x) geteilt. So können wir sie an zwei Seiten des x²-Quadrats anlegen.",
+        hint: "5x bedeutet: Rechteck mit Seiten 5 und x. Davon brauchen wir zwei Stück.",
+        question: {
+          prompt: "Warum teilen wir 10x in 5x + 5x?",
+          options: ["Damit rechts und unten je ein Rechteck ergänzt werden kann.", "Damit x verschwindet", "Nur zur Dekoration"],
+          correct: 0,
+          good: "Genau! So entsteht fast ein großes Quadrat.",
+          bad: "Die Teilung hilft, die Flächen sinnvoll um das x²-Quadrat anzuordnen."
+        },
+        draw: drawStep3
+      },
+      {
+        title: "Fehlende Ecke ergänzen",
+        equation: "x² + 10x + 25 = 39 + 25",
+        text: "Zwischen den beiden 5x-Rechtecken fehlt unten rechts ein kleines Quadrat mit Seitenlänge 5. Seine Fläche ist 25.",
+        hint: "Wenn die Lücke 5 mal 5 groß ist, hat sie den Flächeninhalt 25.",
+        question: {
+          prompt: "Warum ergänzen wir genau 25?",
+          options: ["Weil die fehlende Ecke ein 5×5-Quadrat ist", "Weil 25 immer bei quadratischen Gleichungen vorkommt", "Weil 39 kleiner als 40 ist"],
+          correct: 0,
+          good: "Perfekt! Die Geometrie erklärt direkt die Zahl 25.",
+          bad: "Die Ergänzung kommt aus der fehlenden Quadratfläche 5·5 = 25."
+        },
+        draw: drawStep4
+      },
+      {
+        title: "Als Binom lesen",
+        equation: "(x + 5)² = 64",
+        text: "Links ist jetzt ein vollständiges Quadrat mit Seitenlänge x + 5. Rechts ergibt 39 + 25 den Wert 64.",
+        hint: "Das Muster ist: x² + 2·5·x + 5² = (x+5)².",
+        question: {
+          prompt: "Welche Seitenlänge hat das neue große Quadrat?",
+          options: ["x + 5", "x + 10", "5x"],
+          correct: 0,
+          good: "Ja! Seitenlänge x+5 führt zur Fläche (x+5)².",
+          bad: "Das große Quadrat hat auf jeder Seite x plus die Ergänzung 5."
+        },
+        draw: drawStep5
+      },
+      {
+        title: "Seitenlänge bestimmen durch Wurzel ziehen",
+        equation: "x + 5 = 8  ⇒  x = 3",
+        text: "Aus (x+5)² = 64 wählen wir hier die positive Seitenlänge: x+5 = 8. Danach 5 subtrahieren: x = 3.",
+        hint: "Die Seitenlänge eines Quadrats ist positiv. Deshalb betrachten wir hier +8.",
+        question: {
+          prompt: "Welcher Schritt folgt auf x + 5 = 8?",
+          options: ["Auf beiden Seiten 5 abziehen", "Auf beiden Seiten 5 addieren", "Durch 8 teilen"],
+          correct: 0,
+          good: "Richtig! Dann erhältst du direkt x = 3.",
+          bad: "Fast: Um x freizustellen, ziehst du 5 auf beiden Seiten ab."
+        },
+        draw: drawStep6
+      }
+    ];
+
+    let currentStep = 0;
+
+    function render() {
+      const s = steps[currentStep];
+      stepHeading.textContent = s.title;
+      equationBox.innerHTML = highlightEquation(s.equation);
+      stepText.textContent = s.text;
+      stepIndicator.textContent = `Schritt ${currentStep + 1} von ${steps.length}`;
+      hintBox.textContent = s.hint;
+      hintBox.classList.remove("show");
+      hintBtn.textContent = "Hinweis einblenden";
+
+      renderQuestion(s.question);
+      s.draw();
+
+      prevBtn.disabled = currentStep === 0;
+      nextBtn.textContent = currentStep === steps.length - 1 ? "Zur Zusammenfassung" : "Weiter";
+    }
+
+    function highlightEquation(eq) {
+      // Wichtige Teile farblich betonen, damit Beziehungen schneller erkannt werden.
+      return eq
+                .replace("25", "<mark>25</mark>")
+        .replace("(x + 5)²", "<mark>(x + 5)²</mark>");
+    }
+
+    function renderQuestion(q) {
+      questionBox.innerHTML = "";
+      const p = document.createElement("p");
+      p.innerHTML = `<strong>Mini-Check:</strong> ${q.prompt}`;
+      questionBox.appendChild(p);
+
+      const form = document.createElement("form");
+      form.addEventListener("submit", (e) => e.preventDefault());
+
+      q.options.forEach((opt, i) => {
+        const id = `q${currentStep}_${i}`;
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="radio" name="answer" id="${id}" value="${i}"> ${opt}`;
+        form.appendChild(label);
+      });
+
+      const checkBtn = document.createElement("button");
+      checkBtn.type = "button";
+      checkBtn.className = "btn-secondary";
+      checkBtn.textContent = "Antwort prüfen";
+
+      const fb = document.createElement("div");
+      fb.className = "feedback";
+
+      checkBtn.addEventListener("click", () => {
+        const selected = form.querySelector("input[name='answer']:checked");
+        if (!selected) {
+          fb.textContent = "Bitte wähle zuerst eine Antwort aus.";
+          fb.className = "feedback warn";
+          return;
+        }
+        if (Number(selected.value) === q.correct) {
+          fb.textContent = q.good;
+          fb.className = "feedback ok";
+        } else {
+          fb.textContent = q.bad;
+          fb.className = "feedback warn";
+        }
+      });
+
+      questionBox.appendChild(form);
+      questionBox.appendChild(checkBtn);
+      questionBox.appendChild(fb);
+    }
+
+    function clearSvg() {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+    }
+
+    function rect(x, y, w, h, fill, stroke = "#334155", opacity = 1) {
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("x", x);
+      r.setAttribute("y", y);
+      r.setAttribute("width", w);
+      r.setAttribute("height", h);
+      r.setAttribute("fill", fill);
+      r.setAttribute("stroke", stroke);
+      r.setAttribute("opacity", opacity);
+      r.setAttribute("stroke-width", "1.5");
+      svg.appendChild(r);
+    }
+
+    function txt(x, y, content, size = 14, color = "#0f172a", weight = "600") {
+      const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      t.setAttribute("x", x);
+      t.setAttribute("y", y);
+      t.setAttribute("font-size", size);
+      t.setAttribute("fill", color);
+      t.setAttribute("font-weight", weight);
+      t.textContent = content;
+      svg.appendChild(t);
+    }
+
+    function dashedRect(x, y, w, h) {
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("x", x);
+      r.setAttribute("y", y);
+      r.setAttribute("width", w);
+      r.setAttribute("height", h);
+      r.setAttribute("fill", "none");
+      r.setAttribute("stroke", "#64748b");
+      r.setAttribute("stroke-width", "2");
+      r.setAttribute("stroke-dasharray", "6 5");
+      svg.appendChild(r);
+    }
+
+    // Hilfsfunktion: Grundquadrat x² zeichnen.
+    function drawXSquare(originX, originY) {
+      rect(originX, originY, xLen, xLen, "#bfdbfe");
+      txt(originX + xLen / 2 - 12, originY + xLen / 2, "x²");
+      txt(originX + xLen / 2 - 8, originY - 8, "x");
+      txt(originX - 16, originY + xLen / 2, "x");
+    }
+
+    function drawStep1() {
+      clearSvg();
+      const ox = 60, oy = 90;
+      drawXSquare(ox, oy);
+      rect(ox + xLen, oy, halfB, xLen, "#fecaca", "#7f1d1d", 0.55);
+      txt(ox + xLen + 30, oy + xLen / 2, "10x", 14, "#7f1d1d");
+      txt(22, 36, "Start: x² + 10x = 39", 15, "#1d4ed8");
+      dashedRect(280, 100, 110, 110);
+      txt(316, 158, "39", 18, "#0f172a");
+    }
+
+
+    function drawStep3() {
+      clearSvg();
+      const ox = 60, oy = 90;
+      drawXSquare(ox, oy);
+
+      // Zwei Rechtecke 5x: rechts und unten.
+      rect(ox + xLen, oy, halfB, xLen, "#fecaca", "#7f1d1d");
+      rect(ox, oy + xLen, xLen, halfB, "#fecaca", "#7f1d1d");
+
+      txt(ox + xLen + 18, oy + xLen / 2, "5x", 14, "#7f1d1d");
+      txt(ox + xLen / 2 - 12, oy + xLen + 30, "5x", 14, "#7f1d1d");
+      txt(22, 34, "10x = 5x + 5x", 15, "#1d4ed8");
+
+      // Fehlende Ecke markieren.
+      dashedRect(ox + xLen, oy + xLen, halfB, halfB);
+      txt(ox + xLen + 8, oy + xLen + 30, "Lücke", 13, "#475569");
+    }
+
+    function drawStep4() {
+      clearSvg();
+      const ox = 60, oy = 90;
+      drawXSquare(ox, oy);
+      rect(ox + xLen, oy, halfB, xLen, "#fecaca", "#7f1d1d");
+      rect(ox, oy + xLen, xLen, halfB, "#fecaca", "#7f1d1d");
+
+      // Ergänzungsquadrat 25
+      rect(ox + xLen, oy + xLen, halfB, halfB, "#fde68a", "#92400e");
+      txt(ox + xLen + 14, oy + xLen + 30, "25", 15, "#92400e");
+      txt(22, 34, "Ergänzung: 5 · 5 = 25", 15, "#1d4ed8");
+    }
+
+    function drawStep5() {
+      clearSvg();
+      const ox = 60, oy = 90;
+
+      // Komplettes Quadrat (x + 5)²
+      rect(ox, oy, xLen + halfB, xLen + halfB, "#dcfce7", "#166534");
+
+      // Unterteilung sichtbar lassen.
+      rect(ox, oy, xLen, xLen, "#bfdbfe", "#334155", 0.9);
+      rect(ox + xLen, oy, halfB, xLen, "#fecaca", "#7f1d1d", 0.9);
+      rect(ox, oy + xLen, xLen, halfB, "#fecaca", "#7f1d1d", 0.9);
+      rect(ox + xLen, oy + xLen, halfB, halfB, "#fde68a", "#92400e", 0.95);
+
+      txt(ox + 52, oy + 85, "(x + 5)²", 18, "#14532d");
+      txt(ox + (xLen + halfB) / 2 - 20, oy - 20, "x + 5", 14, "#14532d");
+      txt(ox - 46, oy + (xLen + halfB) / 2, "x + 5", 14, "#14532d");
+      txt(20, 34, "Jetzt ist es ein vollständiges Quadrat", 15, "#1d4ed8");
+    }
+
+    function drawStep6() {
+      clearSvg();
+      const ox = 90, oy = 90;
+      rect(ox, oy, 160, 160, "#dcfce7", "#166534");
+      txt(ox + 48, oy + 86, "Fläche 64", 17, "#14532d");
+      txt(ox + 56, oy - 8, "8", 14, "#14532d");
+      txt(ox - 20, oy + 84, "8", 14, "#14532d");
+      txt(24, 34, "(x + 5)² = 64  ⇒  x + 5 = 8", 15, "#1d4ed8");
+      txt(24, 290, "Daraus: x = 3", 18, "#0f766e");
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (currentStep > 0) {
+        currentStep--;
+        summary.hidden = true;
+        render();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentStep < steps.length - 1) {
+        currentStep++;
+        render();
+      } else {
+        summary.hidden = false;
+        summary.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+
+    hintBtn.addEventListener("click", () => {
+      const showing = hintBox.classList.toggle("show");
+      hintBtn.textContent = showing ? "Hinweis ausblenden" : "Hinweis einblenden";
+    });
+
+    // Initialer Render beim Laden der Seite.
+    render();
+  </script>
+</body>
+</html>
