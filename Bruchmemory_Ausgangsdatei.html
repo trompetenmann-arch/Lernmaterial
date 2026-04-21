@@ -1,0 +1,544 @@
+Hier ist ein kompaktes, eigenständiges HTML-Applet für ein Brüche-Memory. Es erzeugt zu jeder ausgewählten Schwierigkeit passende Paare aus symbolischen Brüchen und ihren Kreisdiagrammen (mit einfachen Nennern). Starten Sie ein neues Spiel über den Button oder ändern Sie die Schwierigkeit.
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Brüche-Memory – BIKI</title>
+  <style>
+    :root{
+      --bg:#f7f7fb;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --accent:#3b82f6;
+      --accent-2:#10b981;
+      --empty:#e5e7eb;
+      --line:#e5e7eb;
+      --good:#16a34a;
+      --bad:#ef4444;
+      --shadow: 0 4px 14px rgba(0,0,0,.08);
+      --radius: 14px;
+      --gap: 12px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+    }
+    .app{
+      width: min(1100px, 100%);
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      gap: 14px;
+    }
+    header{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+    }
+    header h1{
+      font-size: 20px;
+      margin:0;
+      letter-spacing:.2px;
+    }
+    .controls{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .controls label{
+      color:var(--muted);
+      font-size:14px;
+    }
+    select, button{
+      appearance:none;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      padding:8px 12px;
+      border-radius:10px;
+      font-size:14px;
+      cursor:pointer;
+    }
+    button.primary{
+      background: var(--accent);
+      color:#fff;
+      border-color: transparent;
+    }
+    button:disabled{
+      opacity:.6; cursor:not-allowed;
+    }
+    .stats{
+      display:flex; gap:14px; color:var(--muted); font-size:14px;
+      align-items:center; flex-wrap: wrap;
+    }
+    .board{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      min-height: 300px;
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: var(--gap);
+      align-content:start;
+    }
+    .card{
+      perspective: 900px;
+      position:relative;
+      height: 140px;
+    }
+    .card button{
+      width:100%; height:100%;
+      border:none; padding:0; background:transparent;
+    }
+    .inner{
+      position:relative;
+      width:100%; height:100%;
+      transition: transform .35s ease;
+      transform-style: preserve-3d;
+      outline:none;
+    }
+    .card.flipped .inner,
+    .card.matched .inner{
+      transform: rotateY(180deg);
+    }
+    .face{
+      position:absolute; inset:0;
+      backface-visibility:hidden;
+      border-radius: 12px;
+      border:1px solid var(--line);
+      background: #fff;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: var(--shadow);
+    }
+    .front{ /* verdeckte Seite */
+      background: linear-gradient(135deg, #eef2ff, #fdf2f8);
+      border-style:dashed;
+    }
+    .back{
+      transform: rotateY(180deg);
+      padding: 8px;
+    }
+    .fractext{
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing:.3px;
+    }
+    .fractext small{
+      display:block; color:var(--muted); font-weight:500; font-size:12px; margin-top:6px;
+    }
+    .piewrap{
+      width: 86px; height: 86px;
+    }
+    .legend{
+      position:absolute; right:8px; bottom:8px; color:var(--muted); font-size:12px;
+    }
+    .footer{
+      display:flex; align-items:center; justify-content:space-between;
+      gap: 10px; flex-wrap: wrap; color:var(--muted); font-size:14px;
+      padding: 0 2px;
+    }
+    .notice{ font-size:13px; }
+    .status{
+      font-weight:600;
+    }
+    .status.good{ color:var(--good); }
+    .status.bad{ color:var(--bad); }
+    .win{
+      position:fixed; inset:0; display:none;
+      align-items:center; justify-content:center;
+      background: rgba(0,0,0,.35);
+      padding: 24px;
+    }
+    .win .box{
+      background:#fff; border-radius:16px; padding:18px; width:min(460px,100%);
+      box-shadow: 0 12px 32px rgba(0,0,0,.25);
+    }
+    .win h2{ margin:0 0 6px; }
+    .win .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+    .sr-only{ position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <h1>Brüche‑Memory</h1>
+      <div class="controls">
+        <label for="difficulty">Schwierigkeit:</label>
+        <select id="difficulty" aria-label="Schwierigkeit wählen">
+          <option value="easy">Leicht (5 Paare)</option>
+          <option value="medium" selected>Mittel (8 Paare)</option>
+          <option value="hard">Schwer (12 Paare)</option>
+        </select>
+        <button id="newGame" class="primary">Neues Spiel</button>
+      </div>
+      <div class="stats" aria-live="polite">
+        <div>Züge: <strong id="moves">0</strong></div>
+        <div>Zeit: <strong id="time">00:00</strong></div>
+        <div>Gefunden: <strong id="found">0</strong></div>
+      </div>
+    </header>
+
+    <main class="board" id="board" aria-label="Spielfeld"></main>
+
+    <div class="footer">
+      <div class="notice">
+        Brüche werden in vollständig gekürzter Form und mit einfachen Nennern (2, 3, 4, 5, 6, 8) verwendet.
+      </div>
+      <div id="feedback" class="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="win" id="win">
+    <div class="box">
+      <h2>Geschafft!</h2>
+      <p>Du hast alle Paare gefunden.</p>
+      <ul>
+        <li>Zeit: <strong id="resTime">–</strong></li>
+        <li>Züge: <strong id="resMoves">–</strong></li>
+      </ul>
+      <div class="actions">
+        <button id="closeWin">Schließen</button>
+        <button id="again" class="primary">Noch einmal spielen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Utility: GCD and formatting
+    function gcd(a,b){ while(b){ [a,b] = [b, a%b]; } return a; }
+    function fmtFrac(n,d){ return n + "/" + d; }
+
+    // Fraction pool by difficulty (denominators kept simple: 2,3,4,5,6,8)
+    const DIFF_CONFIG = {
+      easy:  { denoms:[2,3,4],           pairs:5 },
+      medium:{ denoms:[2,3,4,5,6],       pairs:8 },
+      hard:  { denoms:[2,3,4,5,6,8],     pairs:12 }
+    };
+
+    function buildPool(denoms){
+      const pool = [];
+      for(const d of denoms){
+        for(let n=1; n<d; n++){
+          if(gcd(n,d) === 1){
+            pool.push({n, d, key: fmtFrac(n,d)});
+          }
+        }
+      }
+      return pool;
+    }
+
+    function sampleUnique(arr, k){
+      const a = [...arr];
+      // Fisher-Yates shuffle
+      for(let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i],a[j]] = [a[j],a[i]];
+      }
+      return a.slice(0, Math.min(k, a.length));
+    }
+
+    // Build deck: for each fraction, create a text card and a pie card
+    function buildDeck(fractions){
+      const deck = [];
+      fractions.forEach((f, idx) => {
+        const pairId = "pair_" + f.key; // shared id to match
+        deck.push({
+          id: pairId + "_txt",
+          pair: pairId,
+          type: "text",
+          n: f.n, d:f.d, label: fmtFrac(f.n,f.d)
+        });
+        deck.push({
+          id: pairId + "_pie",
+          pair: pairId,
+          type: "pie",
+          n: f.n, d:f.d, label: fmtFrac(f.n,f.d)
+        });
+      });
+      // shuffle deck
+      for(let i=deck.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [deck[i],deck[j]] = [deck[j],deck[i]];
+      }
+      return deck;
+    }
+
+    // SVG sector path helper
+    function polarToCartesian(cx, cy, r, angleDeg){
+      const rad = (angleDeg - 90) * Math.PI/180;
+      return { x: cx + r*Math.cos(rad), y: cy + r*Math.sin(rad) };
+    }
+    function sectorPath(cx, cy, r, startAngle, endAngle){
+      const p1 = polarToCartesian(cx, cy, r, startAngle);
+      const p2 = polarToCartesian(cx, cy, r, endAngle);
+      const largeArc = (endAngle - startAngle) % 360 > 180 ? 1 : 0;
+      return `M ${cx} ${cy} L ${p1.x} ${p1.y} A ${r} ${r} 0 ${largeArc} 1 ${p2.x} ${p2.y} Z`;
+    }
+
+    function makePieSVG(n, d, size=86){
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("width", size);
+      svg.setAttribute("height", size);
+      svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", `Kreisdiagramm zu ${fmtFrac(n,d)}`);
+
+      const cx = size/2, cy = size/2, r = size*0.48;
+
+      // Optional: subtle background circle
+      const bg = document.createElementNS(svg.namespaceURI, "circle");
+      bg.setAttribute("cx", cx); bg.setAttribute("cy", cy);
+      bg.setAttribute("r", r);
+      bg.setAttribute("fill", "white");
+      bg.setAttribute("stroke", "#e5e7eb");
+      bg.setAttribute("stroke-width", "1");
+      svg.appendChild(bg);
+
+      for(let k=0; k<d; k++){
+        const start = k * 360/d;
+        const end   = (k+1) * 360/d;
+        const path = document.createElementNS(svg.namespaceURI, "path");
+        path.setAttribute("d", sectorPath(cx, cy, r, start, end));
+        path.setAttribute("fill", k < n ? "url(#gradAccent)" : "#eef2f7");
+        path.setAttribute("stroke", "#d1d5db");
+        path.setAttribute("stroke-width", "0.5");
+        svg.appendChild(path);
+      }
+
+      // Define a simple gradient for filled slices (once per document)
+      ensureDefs(svg);
+
+      return svg;
+    }
+
+    function ensureDefs(svg){
+      const doc = svg.ownerDocument;
+      let defs = doc.querySelector("defs#common-defs");
+      if(!defs){
+        defs = document.createElementNS(svg.namespaceURI, "defs");
+        defs.setAttribute("id", "common-defs");
+        // gradient
+        const grad = document.createElementNS(svg.namespaceURI, "linearGradient");
+        grad.setAttribute("id", "gradAccent");
+        grad.setAttribute("x1", "0"); grad.setAttribute("y1", "0");
+        grad.setAttribute("x2", "1"); grad.setAttribute("y2", "1");
+        const s1 = document.createElementNS(svg.namespaceURI, "stop");
+        s1.setAttribute("offset", "0%");
+        s1.setAttribute("stop-color", "#60a5fa"); // lighter blue
+        const s2 = document.createElementNS(svg.namespaceURI, "stop");
+        s2.setAttribute("offset", "100%");
+        s2.setAttribute("stop-color", "#3b82f6"); // accent
+        grad.appendChild(s1); grad.appendChild(s2);
+        defs.appendChild(grad);
+
+        document.body.appendChild(defs);
+      }
+    }
+
+    // Rendering a single card element
+    function renderCard(card){
+      const el = document.createElement("div");
+      el.className = "card";
+      el.dataset.id = card.id;
+      el.dataset.pair = card.pair;
+      el.dataset.type = card.type;
+
+      const btn = document.createElement("button");
+      btn.className = "inner";
+      btn.setAttribute("aria-label", card.type === "text" ? `Bruch ${card.label}` : `Kreisdiagramm zu ${card.label}`);
+      btn.setAttribute("type","button");
+
+      const front = document.createElement("div");
+      front.className = "face front";
+      const back = document.createElement("div");
+      back.className = "face back";
+
+      if(card.type === "text"){
+        const t = document.createElement("div");
+        t.className = "fractext";
+        t.innerHTML = `${card.n}<span class="sr-only"> durch </span>/<span class="sr-only"> </span>${card.d}<small>Bruch</small>`;
+        back.appendChild(t);
+      }else{
+        const w = document.createElement("div");
+        w.className = "piewrap";
+        w.appendChild(makePieSVG(card.n, card.d, 86));
+        back.appendChild(w);
+        const lg = document.createElement("div");
+        lg.className = "legend";
+        lg.textContent = fmtFrac(card.n, card.d);
+        back.appendChild(lg);
+      }
+
+      btn.appendChild(front);
+      btn.appendChild(back);
+      el.appendChild(btn);
+      return el;
+    }
+
+    // Game state
+    const boardEl = document.getElementById("board");
+    const feedbackEl = document.getElementById("feedback");
+    const movesEl = document.getElementById("moves");
+    const timeEl = document.getElementById("time");
+    const foundEl = document.getElementById("found");
+    const diffSel = document.getElementById("difficulty");
+    const btnNew = document.getElementById("newGame");
+    const winBox = document.getElementById("win");
+    const resTime = document.getElementById("resTime");
+    const resMoves = document.getElementById("resMoves");
+    const againBtn = document.getElementById("again");
+    const closeWin = document.getElementById("closeWin");
+
+    let deck = [];
+    let first = null, second = null, lock = false;
+    let moves = 0, foundPairs = 0, totalPairs = 0;
+    let timer = null, startTs = null;
+
+    function resetStats(){
+      moves = 0; foundPairs = 0;
+      movesEl.textContent = "0";
+      foundEl.textContent = "0";
+      timeEl.textContent = "00:00";
+      feedbackEl.textContent = "";
+      stopTimer();
+    }
+    function startTimer(){
+      startTs = Date.now();
+      timer = setInterval(()=>{
+        const t = Math.floor((Date.now()-startTs)/1000);
+        timeEl.textContent = fmtTime(t);
+      }, 200);
+    }
+    function stopTimer(){
+      if(timer){ clearInterval(timer); timer = null; }
+    }
+    function fmtTime(sec){
+      const m = Math.floor(sec/60).toString().padStart(2,"0");
+      const s = (sec%60).toString().padStart(2,"0");
+      return `${m}:${s}`;
+    }
+
+    function setupGame(){
+      resetStats();
+      const cfg = DIFF_CONFIG[diffSel.value];
+      const pool = buildPool(cfg.denoms);
+      const chosen = sampleUnique(pool, cfg.pairs);
+      totalPairs = chosen.length;
+      deck = buildDeck(chosen);
+
+      boardEl.innerHTML = "";
+      deck.forEach(card => {
+        const el = renderCard(card);
+        boardEl.appendChild(el);
+      });
+
+      // Attach listeners
+      boardEl.querySelectorAll(".card .inner").forEach(btn => {
+        btn.addEventListener("click", onCardClick);
+      });
+
+      // start timer at first flip
+      startTs = null;
+    }
+
+    function onCardClick(e){
+      if(lock) return;
+      const btn = e.currentTarget;
+      const cardEl = btn.closest(".card");
+      if(cardEl.classList.contains("flipped") || cardEl.classList.contains("matched")) return;
+
+      // flip
+      cardEl.classList.add("flipped");
+      if(!startTs){ startTimer(); }
+
+      const card = {
+        el: cardEl,
+        pair: cardEl.dataset.pair,
+        type: cardEl.dataset.type,
+        label: cardEl.querySelector(".legend") ? cardEl.querySelector(".legend").textContent : cardEl.querySelector(".fractext")?.textContent
+      };
+
+      if(!first){
+        first = card;
+        feedback("");
+      }else if(!second){
+        second = card;
+        moves++; movesEl.textContent = String(moves);
+        checkMatch();
+      }
+    }
+
+    function checkMatch(){
+      if(!first || !second) return;
+      lock = true;
+      const isSamePair = first.pair === second.pair;
+      const differentTypes = first.type !== second.type;
+
+      if(isSamePair && differentTypes){
+        // match
+        setTimeout(()=>{
+          first.el.classList.add("matched");
+          second.el.classList.add("matched");
+          foundPairs++; foundEl.textContent = String(foundPairs);
+          feedback("Richtig!", "good");
+          resetPick();
+          lock = false;
+          if(foundPairs === totalPairs){
+            stopTimer();
+            const elapsed = Math.floor((Date.now()-startTs)/1000);
+            resTime.textContent = fmtTime(elapsed);
+            resMoves.textContent = String(moves);
+            winBox.style.display = "flex";
+          }
+        }, 250);
+      }else{
+        // not a match
+        feedback("Leider nicht. Versuche es erneut.", "bad");
+        setTimeout(()=>{
+          first.el.classList.remove("flipped");
+          second.el.classList.remove("flipped");
+          resetPick();
+          lock = false;
+        }, 800);
+      }
+    }
+
+    function resetPick(){
+      first = null; second = null;
+    }
+
+    function feedback(msg, cls){
+      feedbackEl.className = "status" + (cls ? " " + cls : "");
+      feedbackEl.textContent = msg || "";
+    }
+
+    btnNew.addEventListener("click", ()=>{ winBox.style.display="none"; setupGame(); });
+    diffSel.addEventListener("change", setupGame);
+    againBtn.addEventListener("click", ()=>{ winBox.style.display="none"; setupGame(); });
+    closeWin.addEventListener("click", ()=>{ winBox.style.display="none"; });
+
+    // Init
+    setupGame();
+  </script>
+</body>
+</html>
+
+ Code kopieren
