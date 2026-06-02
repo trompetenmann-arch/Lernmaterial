@@ -48,6 +48,8 @@
     label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-weight: 750; }
     .value { width: 78px; border: 1px solid #cbd8d5; border-radius: 8px; padding: 3px 6px; color: var(--blue-dark); font-weight: 800; text-align: right; background: white; }
     input[type=range] { width: 100%; accent-color: var(--blue); }
+    .toggle { display: flex; justify-content: flex-start; gap: 8px; padding: 9px 0 2px; font-size: .88rem; color: var(--blue-dark); }
+    .toggle input { width: 17px; height: 17px; accent-color: var(--blue); }
     .mini { margin: 4px 0 0; font-size: .79rem; color: var(--muted); }
     .actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 14px; }
     button { border: 0; border-radius: 10px; padding: 11px 13px; cursor: pointer; font-weight: 800; transition: .2s ease; }
@@ -82,16 +84,16 @@
           <defs><radialGradient id="whiteBall"><stop offset="0" stop-color="#fff"/><stop offset=".72" stop-color="#f7f7f2"/><stop offset="1" stop-color="#bdc7c3"/></radialGradient><radialGradient id="redBall"><stop offset="0" stop-color="#f77768"/><stop offset="1" stop-color="#ad2e2a"/></radialGradient></defs>
           <rect x="48" y="38" width="754" height="410" rx="22" fill="#70482f"/><rect x="62" y="52" width="726" height="382" rx="14" fill="#19745f" stroke="#0d594b" stroke-width="8"/>
           <g id="grid"></g><g id="ticks"></g>
-          <line id="headLine" x1="95" y1="75" x2="95" y2="405" stroke="#e7f4ed" stroke-width="3"/>
+          <line id="headLine" x1="252.5" y1="75" x2="252.5" y2="405" stroke="#e7f4ed" stroke-width="3"/>
           <line id="xAxis" x1="95" y1="240" x2="725" y2="240" stroke="#e7f4ed" stroke-width="2"/>
-          <text x="734" y="235" class="axis-label">x</text><text x="82" y="65" class="axis-label">y</text>
-          <text x="105" y="96" fill="#d9f2e9" font-size="12" font-weight="700">KOPFLINIE</text>
+          <text id="xLabel" x="734" y="235" class="axis-label">x</text><text x="244" y="65" class="axis-label">y</text>
+          <text id="headLabel" x="264" y="96" fill="#d9f2e9" font-size="12" font-weight="700">KOPFLINIE</text>
           <g id="pockets"></g><circle id="targetPocket" r="22" fill="none" stroke="#f4b942" stroke-width="4" stroke-dasharray="6 4"/><line id="guide" class="guide"/><line id="cue" class="cue"/>
           <g id="redGroup"><circle id="red" class="ball" r="12" fill="url(#redBall)"/><circle id="redShine" r="3" fill="#ffd0c8" opacity=".8"/></g>
           <g id="whiteGroup"><circle id="white" class="ball" r="12" fill="url(#whiteBall)"/><circle id="whiteShine" r="3" fill="#fff"/></g>
           <circle id="origin" r="4" fill="#f4b942"/><text id="originLabel" class="axis-text">0</text>
         </svg>
-        <div class="footer-note">Die y-Achse ist die Kopflinie. Ihr Ursprung ist der Kopfpunkt. Die Skala reicht von −10 bis 10.</div>
+        <div class="footer-note">Die y-Achse ist die Kopflinie auf einem Viertel der Tischlänge. Ihr Ursprung ist der Kopfpunkt. Die Skala reicht von −10 bis 10.</div>
       </article>
       <aside class="side">
         <section class="side-card task">
@@ -101,40 +103,49 @@
           <h2>Stoß einstellen</h2>
           <div class="control"><label for="bRange"><span>Startpunkt <i>b</i></span><input class="value" id="bNumber" type="number" step="0.001" aria-label="Wert für b" /></label><input id="bRange" type="range" min="-10" max="10" step="0.05" /><p class="mini">Verschiebt die weiße Kugel auf der Kopflinie.</p></div>
           <div class="control"><label for="mRange"><span>Steigung <i>m</i></span><input class="value" id="mNumber" type="number" step="0.001" aria-label="Wert für m" /></label><input id="mRange" type="range" min="-2" max="2" step="0.025" /><p class="mini">Bestimmt den Winkel deines Queues.</p></div>
+          <label class="toggle"><input id="preview" type="checkbox" /> Vorschau der Geraden anzeigen</label>
           <div class="actions"><button class="shoot" id="shoot">Stoß ausführen</button><button class="reset" id="reset" title="Eingaben zurücksetzen">↺</button></div>
         </section>
-        <section class="side-card status" id="status"><h2 id="statusTitle">Bereit zum Anstoß?</h2><p id="statusText">Verändere <b>m</b> und <b>b</b>. Die gestrichelte Linie zeigt dir den Weg der weißen Kugel.</p><button class="hint" id="hint">Hinweis anzeigen</button><div class="tip" id="tip"></div></section>
+        <section class="side-card status" id="status"><h2 id="statusTitle">Bereit zum Anstoß?</h2><p id="statusText">Verändere <b>m</b> und <b>b</b>. Bei Bedarf kannst du die Vorschau der Geraden einblenden.</p><button class="hint" id="hint">Hinweis anzeigen</button><div class="tip" id="tip"></div></section>
       </aside>
     </section>
   </main>
 <script>
-  const SX = x => 95 + x * 35, SY = y => 240 - y * 16.5;
+  const X_MIN = -6, X_MAX = 18, Y_MIN = -10, Y_MAX = 10;
+  const BALL_RADIUS = .53, POCKET_RADIUS = 1.12, SHOT_SPEED = 36, FRICTION = .985;
+  const SX = x => 95 + (x - X_MIN) * 26.25, SY = y => 240 - y * 16.5;
+  const pockets = [[-6,-10],[-6,10],[6,-10],[6,10],[18,-10],[18,10]];
   const levels = [
-    { title:'Erster Anstoß', text:'Beginne mit ganzen Zahlen. Bringe die rote Kugel mit einem direkten Stoß in das markierte Loch.', red:[9,1], pocket:[18,10], start:[0,-8], hint:'Lies zuerst den y-Achsenabschnitt an der Kopflinie ab. Gehe dann für die Steigung pro Schritt nach rechts genau einen Schritt nach oben.' },
-    { title:'Mit einem Bruch rechnen', text:'Diesmal fällt die Gerade. Nutze für die Steigung einen Bruch oder eine passende Dezimalzahl.', red:[6,-2], pocket:[18,-10], start:[0,2], hint:'Vom Startpunkt bis zur roten Kugel gehst du 6 nach rechts und 4 nach unten. Was ist −4 : 6?' },
-    { title:'Feinjustierung', text:'Jetzt sind sowohl die Steigung als auch der y-Achsenabschnitt Dezimalzahlen.', red:[8,4], pocket:[18,10], start:[0,-.8], hint:'Zwischen roter Kugel und Loch sind es 10 nach rechts und 6 nach oben. Berechne zuerst m und setze dann den Punkt (8|4) ein.' },
-    { title:'Profi-Stoß', text:'Zum Abschluss brauchst du eine besonders genaue Einstellung. Runde erst ganz am Ende.', red:[10,-2.5], pocket:[18,-10], start:[0,6.875], hint:'Zwischen roter Kugel und Loch liegen Δx = 8 und Δy = −7,5. Setze danach den Punkt (10|−2,5) ein.' }
+    { title:'Erster Anstoß', text:'Beginne mit ganzen Zahlen. Bringe die rote Kugel mit einem direkten Stoß in das markierte Loch.', red:[9,1], pocket:[18,10], hint:'Lies zuerst den y-Achsenabschnitt an der Kopflinie ab. Gehe dann für die Steigung pro Schritt nach rechts genau einen Schritt nach oben.' },
+    { title:'Mit einem Bruch rechnen', text:'Diesmal fällt die Gerade. Nutze für die Steigung einen Bruch oder eine passende Dezimalzahl.', red:[6,-2], pocket:[18,-10], hint:'Vom Startpunkt bis zur roten Kugel gehst du 6 nach rechts und 4 nach unten. Was ist −4 : 6?' },
+    { title:'Feinjustierung', text:'Jetzt sind sowohl die Steigung als auch der y-Achsenabschnitt Dezimalzahlen.', red:[8,4], pocket:[18,10], hint:'Zwischen roter Kugel und Loch sind es 10 nach rechts und 6 nach oben. Berechne zuerst m und setze dann den Punkt (8|4) ein.' },
+    { title:'Profi-Stoß', text:'Zum Abschluss brauchst du eine besonders genaue Einstellung. Runde erst ganz am Ende.', red:[10,-2.5], pocket:[18,-10], hint:'Zwischen roter Kugel und Loch liegen Δx = 8 und Δy = −7,5. Setze danach den Punkt (10|−2,5) ein.' }
   ];
   let level = 0, locked = false;
   const $ = id => document.getElementById(id), fmt = n => Number(n.toFixed(3)).toLocaleString('de-DE');
+  const distance = (a,b) => Math.hypot(a.x-b[0],a.y-b[1]);
+
   function makeBoard() {
     let grid='', ticks='';
-    for (let x=0; x<=18; x++) grid += `<line class="grid" x1="${SX(x)}" y1="${SY(-10)}" x2="${SX(x)}" y2="${SY(10)}"/>`;
-    for (let y=-10; y<=10; y++) grid += `<line class="grid" x1="${SX(0)}" y1="${SY(y)}" x2="${SX(18)}" y2="${SY(y)}"/>`;
-    for (let x=2; x<=18; x+=2) ticks += `<text class="axis-text" x="${SX(x)-6}" y="${SY(0)+18}">${x}</text>`;
-    for (let y=-10; y<=10; y+=2) if(y) ticks += `<text class="axis-text" x="${SX(0)-26}" y="${SY(y)+4}">${y}</text>`;
+    for (let x=X_MIN; x<=X_MAX; x++) grid += `<line class="grid" x1="${SX(x)}" y1="${SY(Y_MIN)}" x2="${SX(x)}" y2="${SY(Y_MAX)}"/>`;
+    for (let y=Y_MIN; y<=Y_MAX; y++) grid += `<line class="grid" x1="${SX(X_MIN)}" y1="${SY(y)}" x2="${SX(X_MAX)}" y2="${SY(y)}"/>`;
+    for (let x=X_MIN; x<=X_MAX; x+=2) if(x) ticks += `<text class="axis-text" x="${SX(x)-6}" y="${SY(0)+18}">${x}</text>`;
+    for (let y=Y_MIN; y<=Y_MAX; y+=2) if(y) ticks += `<text class="axis-text" x="${SX(0)-26}" y="${SY(y)+4}">${y}</text>`;
     $('grid').innerHTML=grid; $('ticks').innerHTML=ticks;
+    $('headLine').setAttribute('x1',SX(0)); $('headLine').setAttribute('x2',SX(0));
+    $('xAxis').setAttribute('x1',SX(X_MIN)); $('xAxis').setAttribute('x2',SX(X_MAX));
+    $('xLabel').setAttribute('x',SX(X_MAX)+9); $('headLabel').setAttribute('x',SX(0)+10);
     $('origin').setAttribute('cx',SX(0)); $('origin').setAttribute('cy',SY(0)); $('originLabel').setAttribute('x',SX(0)-16); $('originLabel').setAttribute('y',SY(0)+18);
-    const holes=[[0,-10],[0,10],[9,-10],[9,10],[18,-10],[18,0],[18,10]];
-    $('pockets').innerHTML=holes.map(([x,y])=>`<circle cx="${SX(x)}" cy="${SY(y)}" r="15" fill="#18312f" stroke="#a77a47" stroke-width="4"/>`).join('');
+    $('pockets').innerHTML=pockets.map(([x,y])=>`<circle cx="${SX(x)}" cy="${SY(y)}" r="16" fill="#18312f" stroke="#a77a47" stroke-width="4"/>`).join('');
   }
-  function setBall(id,x,y){ $(id).setAttribute('transform',`translate(${SX(x)} ${SY(y)})`); }
+  function setBall(id,x,y,scale=1,opacity=1){ const ball=$(id); ball.setAttribute('transform',`translate(${SX(x)} ${SY(y)}) scale(${scale})`); ball.setAttribute('opacity',opacity); }
   function render() {
     const L=levels[level], m=+$('mNumber').value, b=+$('bNumber').value;
     setBall('whiteGroup',0,b); setBall('redGroup',...L.red);
-    const yEnd=m*18+b; $('guide').setAttribute('x1',SX(0)); $('guide').setAttribute('y1',SY(b)); $('guide').setAttribute('x2',SX(18)); $('guide').setAttribute('y2',SY(yEnd));
-    const fx=35, fy=-m*16.5, norm=Math.hypot(fx,fy), back=78;
-    $('cue').setAttribute('x1',SX(0)-fx/norm*back); $('cue').setAttribute('y1',SY(b)-fy/norm*back); $('cue').setAttribute('x2',SX(0)-fx/norm*17); $('cue').setAttribute('y2',SY(b)-fy/norm*17);
+    $('guide').setAttribute('x1',SX(0)); $('guide').setAttribute('y1',SY(b)); $('guide').setAttribute('x2',SX(X_MAX)); $('guide').setAttribute('y2',SY(m*X_MAX+b));
+    $('guide').style.display=$('preview').checked?'block':'none';
+    const fx=26.25, fy=-m*16.5, norm=Math.hypot(fx,fy), back=78;
+    $('cue').style.opacity=1; $('cue').setAttribute('x1',SX(0)-fx/norm*back); $('cue').setAttribute('y1',SY(b)-fy/norm*back); $('cue').setAttribute('x2',SX(0)-fx/norm*17); $('cue').setAttribute('y2',SY(b)-fy/norm*17);
     $('eqM').textContent=fmt(m); $('eqSign').textContent=b<0?'−':'+'; $('eqB').textContent=fmt(Math.abs(b));
   }
   function updateLevel() {
@@ -142,26 +153,60 @@
     $('targetText').textContent=`Rote Kugel: (${fmt(L.red[0])}|${fmt(L.red[1])}) · Zielloch: (${fmt(L.pocket[0])}|${fmt(L.pocket[1])})`;
     $('progress').innerHTML=levels.map((_,i)=>`<span class="step ${i<level?'done':i===level?'active':''}"></span>`).join('');
     $('targetPocket').setAttribute('cx',SX(L.pocket[0])); $('targetPocket').setAttribute('cy',SY(L.pocket[1]));
-    $('tip').textContent=L.hint; $('tip').classList.remove('show'); resetInputs(); setStatus('Bereit zum Anstoß?','Verändere m und b. Die gestrichelte Linie zeigt dir den Weg der weißen Kugel.');
+    $('tip').textContent=L.hint; $('tip').classList.remove('show'); resetInputs(); setStatus('Bereit zum Anstoß?','Richte das Queue mit m und b aus. Wenn du möchtest, kannst du die Vorschau der Geraden einblenden.');
   }
-  function resetInputs(){ const L=levels[level]; $('bNumber').value=level===0?-6:0; $('mNumber').value=0; $('bRange').value=$('bNumber').value; $('mRange').value=0; render(); }
+  function resetInputs(){ $('bNumber').value=level===0?-6:0; $('mNumber').value=0; $('bRange').value=$('bNumber').value; $('mRange').value=0; render(); }
   function setStatus(title,text,type=''){ $('statusTitle').textContent=title; $('statusText').innerHTML=text; $('status').className=`side-card status ${type}`; }
-  function animate(id,from,to,duration){ return new Promise(resolve=>{ const t0=performance.now(); function frame(now){ const p=Math.min(1,(now-t0)/duration), e=1-(1-p)**3; setBall(id,from[0]+(to[0]-from[0])*e,from[1]+(to[1]-from[1])*e); p<1?requestAnimationFrame(frame):resolve(); } requestAnimationFrame(frame); }); }
+  function sinkBall(ball,pocket){ ball.sunk=true; ball.vx=0; ball.vy=0; ball.sinkPocket=pocket; ball.sinkProgress=0; }
+  function updateSink(ball,dt){
+    if(!ball.sunk)return;
+    ball.sinkProgress=Math.min(1,ball.sinkProgress+dt*4.5);
+    ball.x+=(ball.sinkPocket[0]-ball.x)*Math.min(1,dt*14); ball.y+=(ball.sinkPocket[1]-ball.y)*Math.min(1,dt*14);
+  }
+  function findPocket(ball){ return pockets.find(pocket=>distance(ball,pocket)<POCKET_RADIUS); }
+  function resolveCollision(white,red){
+    const dx=red.x-white.x, dy=red.y-white.y, d=Math.hypot(dx,dy);
+    if(d===0 || d>BALL_RADIUS*2)return false;
+    const nx=dx/d, ny=dy/d, relative=(white.vx-red.vx)*nx+(white.vy-red.vy)*ny;
+    if(relative<=0)return false;
+    const overlap=BALL_RADIUS*2-d; white.x-=nx*overlap/2; white.y-=ny*overlap/2; red.x+=nx*overlap/2; red.y+=ny*overlap/2;
+    const impulse=relative*.98; white.vx-=impulse*nx; white.vy-=impulse*ny; red.vx+=impulse*nx; red.vy+=impulse*ny;
+    return true;
+  }
+  function simulateShot(m,b){
+    return new Promise(resolve=>{
+      const direction=Math.hypot(1,m), white={x:0,y:b,vx:SHOT_SPEED/direction,vy:SHOT_SPEED*m/direction,sunk:false}, red={x:levels[level].red[0],y:levels[level].red[1],vx:0,vy:0,sunk:false};
+      let hitRed=false, elapsed=0, last=performance.now();
+      function frame(now){
+        const dt=Math.min(.04,(now-last)/1000), steps=Math.ceil(dt/.01), step=dt/steps; last=now; elapsed+=dt;
+        for(let i=0;i<steps;i++){
+          for(const ball of [white,red]) if(!ball.sunk){ ball.x+=ball.vx*step; ball.y+=ball.vy*step; const drag=Math.pow(FRICTION,step*60); ball.vx*=drag; ball.vy*=drag; }
+          if(!white.sunk && !red.sunk && resolveCollision(white,red))hitRed=true;
+          for(const ball of [white,red]) if(!ball.sunk){ const pocket=findPocket(ball); if(pocket)sinkBall(ball,pocket); }
+          updateSink(white,step); updateSink(red,step);
+        }
+        setBall('whiteGroup',white.x,white.y,white.sunk?1-white.sinkProgress:.999,white.sunk?1-white.sinkProgress:1);
+        setBall('redGroup',red.x,red.y,red.sunk?1-red.sinkProgress:.999,red.sunk?1-red.sinkProgress:1);
+        const moving=[white,red].some(ball=>!ball.sunk&&Math.hypot(ball.vx,ball.vy)>.12), outside=[white,red].some(ball=>!ball.sunk&&(ball.x<X_MIN-1||ball.x>X_MAX+1||ball.y<Y_MIN-1||ball.y>Y_MAX+1));
+        if(elapsed<7 && moving && !outside) requestAnimationFrame(frame); else resolve({hitRed,white,red});
+      }
+      requestAnimationFrame(frame);
+    });
+  }
   async function shoot(){
-    if(locked)return; locked=true; $('shoot').disabled=true; const L=levels[level], m=+$('mNumber').value, b=+$('bNumber').value, [rx,ry]=L.red, [px,py]=L.pocket;
-    const hitRed=Math.abs(m*rx+b-ry)<.07, hitPocket=Math.abs(m*px+b-py)<.1;
-    if(hitRed && hitPocket){
-      await animate('whiteGroup',[0,b],L.red,700); await animate('redGroup',L.red,L.pocket,650);
-      setStatus('Versenkt!','Stark gespielt: Deine Funktion beschreibt genau die richtige Stoßlinie.','success');
-      setTimeout(()=>{ if(level<levels.length-1){ level++; updateLevel(); } else setStatus('Training geschafft!','Du hast alle vier Kugeln versenkt und Geraden mit ganzen Zahlen, Brüchen und Dezimalzahlen gemeistert.','success'); locked=false; $('shoot').disabled=level===levels.length-1; },900);
+    if(locked)return; locked=true; $('shoot').disabled=true; $('reset').disabled=true; const L=levels[level], m=+$('mNumber').value, b=+$('bNumber').value;
+    $('cue').style.opacity=0; setStatus('Kugeln rollen …','Die Simulation berechnet Kollision, Reibung und den Einzugsbereich der Löcher.');
+    const result=await simulateShot(m,b), target=result.red.sinkPocket && distance({x:result.red.sinkPocket[0],y:result.red.sinkPocket[1]},L.pocket)<.01;
+    if(result.red.sunk && target){
+      setStatus('Versenkt!','Stark gespielt: Die rote Kugel ist nah genug an das Zielloch gerollt und wurde eingezogen.','success');
+      setTimeout(()=>{ if(level<levels.length-1){ level++; updateLevel(); $('shoot').disabled=false; } else setStatus('Training geschafft!','Du hast alle vier Kugeln mit passenden linearen Funktionen versenkt.','success'); locked=false; $('reset').disabled=false; },950);
     } else {
-      const missX=hitRed?rx:Math.min(18, Math.max(5,rx)); await animate('whiteGroup',[0,b],[missX,m*missX+b],650);
-      const detail=!hitRed?'Die weiße Kugel trifft die rote Kugel noch nicht. Prüfe zuerst, ob deine Gerade durch den roten Punkt verläuft.':'Die rote Kugel würde nicht ins Zielloch rollen. Prüfe auch, ob deine Gerade durch das markierte Loch verläuft.';
-      setStatus('Knapp daneben!',detail,'error'); setTimeout(()=>{ render(); locked=false; $('shoot').disabled=false; },650);
+      const detail=!result.hitRed?'Die weiße Kugel hat die rote Kugel verfehlt. Prüfe zuerst, ob deine Gerade nahe genug am roten Punkt vorbeiläuft.':result.red.sunk?'Die rote Kugel ist in einem anderen Loch gelandet. Richte das Queue auf das markierte Zielloch aus.':'Die rote Kugel wurde angespielt, ist aber nicht nah genug an das markierte Loch gerollt.';
+      setStatus('Noch nicht versenkt',detail,'error'); setTimeout(()=>{render(); locked=false; $('shoot').disabled=false; $('reset').disabled=false;},850);
     }
   }
-  ['b','m'].forEach(key=>{ const range=$(key+'Range'), num=$(key+'Number'); range.addEventListener('input',()=>{num.value=range.value;render();}); num.addEventListener('input',()=>{ if(num.value!==''){range.value=num.value;render();} }); });
-  $('shoot').addEventListener('click',shoot); $('reset').addEventListener('click',()=>{if(!locked){resetInputs();setStatus('Neu ausgerichtet','Passe die Parameter an und probiere einen neuen Stoß.');}}); $('hint').addEventListener('click',()=>{$('tip').classList.toggle('show');});
+  ['b','m'].forEach(key=>{ const range=$(key+'Range'), num=$(key+'Number'); range.addEventListener('input',()=>{num.value=range.value;render();}); num.addEventListener('input',()=>{if(num.value!==''){range.value=num.value;render();}}); });
+  $('preview').addEventListener('change',render); $('shoot').addEventListener('click',shoot); $('reset').addEventListener('click',()=>{if(!locked){resetInputs();setStatus('Neu ausgerichtet','Passe die Parameter an und probiere einen neuen Stoß.');}}); $('hint').addEventListener('click',()=>{$('tip').classList.toggle('show');});
   makeBoard(); updateLevel();
 </script>
 </body>

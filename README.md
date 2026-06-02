@@ -67,4 +67,4 @@ Sie kann direkt im Browser geöffnet werden.
 
 ## Geraden-Billard für lineare Funktionen
 
-Mit `billard-lineare-funktionen.html` steht eine interaktive Lernumgebung für die 8. Klasse zur Verfügung. Die Schüler*innen steuern den y-Achsenabschnitt `b` und die Steigung `m`, um eine rote Kugel entlang einer linearen Funktion direkt einzulochen. Vier aufeinander aufbauende Aufgaben führen von ganzzahligen Werten zu Brüchen und Dezimalzahlen. Die Datei kann direkt im Browser geöffnet werden.
+Mit `billard-lineare-funktionen.html` steht eine interaktive Lernumgebung für die 8. Klasse zur Verfügung. Die Schüler*innen steuern den y-Achsenabschnitt `b` und die Steigung `m`, um eine rote Kugel entlang einer linearen Funktion direkt einzulochen. Vier aufeinander aufbauende Aufgaben führen von ganzzahligen Werten zu Brüchen und Dezimalzahlen. Die animierten Stöße berücksichtigen Kugelkollisionen, Reibung und den Einzugsbereich der Löcher; die Geradenvorschau kann bei Bedarf eingeblendet werden. Die Datei kann direkt im Browser geöffnet werden.
