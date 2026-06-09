@@ -63,4 +63,6 @@ worksheet-tool render \
 
 Für eine schrittweise Visualisierung der Zahlenfolge `4, 9, 16, …` gibt es die Datei `lernumgebung.html`.
 Sie kann direkt im Browser geöffnet werden.
+Für eine interaktive Visualisierung von Forward Pass, quadratischem Fehler, Kettenregel-Backpropagation und Gewichtsupdate in einem linearen neuronalen Netz gibt es die Datei `backpropagation-linear.html`.
+Sie kann ebenfalls direkt im Browser geöffnet werden.
 
