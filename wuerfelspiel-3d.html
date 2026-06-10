@@ -34,7 +34,7 @@
     button { cursor: pointer; }
 
     .app {
-      width: min(1120px, calc(100% - 28px));
+      width: min(1380px, calc(100% - 28px));
       margin: 0 auto;
       padding: 24px 0 34px;
     }
@@ -109,13 +109,13 @@
 
     .selection-layout {
       display: grid;
-      grid-template-columns: 1fr 310px;
+      grid-template-columns: minmax(780px, 1fr) 340px;
       gap: 18px;
       align-items: stretch;
     }
 
-    .canvas-wrap { position: relative; min-height: 560px; background: radial-gradient(circle at center, rgba(143,243,255,.1), rgba(0,0,0,.12)); }
-    #selectionCanvas, #playCanvas { width: 100%; height: 100%; min-height: 560px; display: block; }
+    .canvas-wrap { position: relative; min-height: 620px; background: radial-gradient(circle at center, rgba(143,243,255,.1), rgba(0,0,0,.12)); }
+    #selectionCanvas, #playCanvas { width: 100%; height: 100%; min-height: 620px; display: block; }
 
     .net-strip {
       position: absolute;
@@ -182,6 +182,16 @@
 
     .swatch { display: inline-block; width: 18px; height: 18px; margin-right: 8px; border-radius: 6px; vertical-align: -3px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); }
 
+    .name-field { display: grid; gap: 6px; color: var(--muted); font-size: .86rem; font-weight: 800; }
+    .name-field input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      padding: 11px 12px;
+    }
+
     .custom-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .custom-grid input {
       width: 100%;
@@ -212,7 +222,7 @@
     button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.06); }
     button:disabled { opacity: .45; cursor: not-allowed; }
 
-    .play-layout { display: grid; grid-template-columns: 1fr 260px; gap: 18px; }
+    .play-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; }
     .play-side { padding: 22px; border-left: 1px solid var(--line); background: rgba(0,0,0,.12); }
 
     .tally {
@@ -261,10 +271,35 @@
 
     .master-box { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
     .small { font-size: .9rem; color: var(--muted); }
+
+    .dice-summary { display: grid; gap: 12px; margin: 16px 0; }
+    .summary-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.055);
+      padding: 12px;
+    }
+    .summary-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-weight: 900; }
+    .mini-net {
+      display: grid;
+      grid-template-columns: repeat(4, 28px);
+      grid-template-rows: repeat(3, 28px);
+      gap: 3px;
+    }
+    .mini-net .net-face { border-radius: 6px; }
+    .mini-net .net-pip { width: 4px; height: 4px; }
+    .mini-net .net-pip[data-pos="tl"] { left: 7px; top: 7px; }
+    .mini-net .net-pip[data-pos="tr"] { right: 7px; top: 7px; }
+    .mini-net .net-pip[data-pos="ml"] { left: 7px; }
+    .mini-net .net-pip[data-pos="mr"] { right: 7px; }
+    .mini-net .net-pip[data-pos="bl"] { left: 7px; bottom: 7px; }
+    .mini-net .net-pip[data-pos="br"] { right: 7px; bottom: 7px; }
+    .result-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
     .hidden { display: none !important; }
 
     @media (max-width: 900px) {
-      .selection-layout, .play-layout, .mode-grid { grid-template-columns: 1fr; }
+      .selection-layout, .play-layout, .mode-grid, .result-summary { grid-template-columns: 1fr; }
       .side, .play-side { border-left: 0; border-top: 1px solid var(--line); }
       .canvas-wrap, #selectionCanvas, #playCanvas { min-height: 460px; }
       .result-grid { grid-template-columns: 1fr; }
@@ -308,6 +343,7 @@
         <aside class="side">
           <h2 id="selectionTitle">Würfel wählen</h2>
           <p id="selectionHint">Klicke einen Würfel.</p>
+          <label class="name-field"><span id="nameLabel">Name</span><input id="playerNameInput" type="text" autocomplete="off" placeholder="Name eingeben"></label>
           <div class="choice-list" id="choiceList"></div>
           <div id="customPanel" class="hidden">
             <h3>Eigener Würfel</h3>
@@ -334,6 +370,7 @@
           </div>
           <p class="last" id="lastRoll">Bereit.</p>
           <button class="primary" id="rollButton" type="button">Würfeln</button>
+          <div class="dice-summary" id="playDiceSummary"></div>
         </aside>
       </div>
     </section>
@@ -341,6 +378,7 @@
     <section class="page" id="resultPage">
       <div class="panel panel-pad">
         <h2 id="resultTitle">Auswertung</h2>
+        <div class="dice-summary result-summary" id="resultDiceSummary"></div>
         <div class="result-grid" id="resultGrid"></div>
         <p id="probabilityText" class="small"></p>
         <div class="master-box">
@@ -399,6 +437,8 @@
       selectedKey: null,
       player1Die: null,
       player2Die: null,
+      player1Name: '',
+      player2Name: '',
       customValues: [3, 3, 3, 3, 3, 3],
       round: 0,
       maxRounds: 11,
@@ -416,6 +456,8 @@
       selectionTitle: $('#selectionTitle'),
       selectionHint: $('#selectionHint'),
       diceNet: $('#diceNet'),
+      nameLabel: $('#nameLabel'),
+      playerNameInput: $('#playerNameInput'),
       customPanel: $('#customPanel'),
       customInputs: $('#customInputs'),
       customSum: $('#customSum'),
@@ -433,7 +475,9 @@
       resultGrid: $('#resultGrid'),
       probabilityText: $('#probabilityText'),
       masterGrid: $('#masterGrid'),
-      masterText: $('#masterText')
+      masterText: $('#masterText'),
+      playDiceSummary: $('#playDiceSummary'),
+      resultDiceSummary: $('#resultDiceSummary')
     };
 
     class BaseScene {
@@ -481,7 +525,7 @@
     class SelectionScene extends BaseScene {
       constructor(canvas) {
         super(canvas);
-        this.camera.position.set(0, 2.9, 7);
+        this.camera.position.set(0, 3.05, 8.6);
         this.camera.lookAt(0, .6, 0);
         this.raycaster = new THREE.Raycaster();
         this.pointer = new THREE.Vector2();
@@ -489,6 +533,7 @@
         this.dragging = false;
         this.dragTarget = null;
         this.lastX = 0;
+        this.lastY = 0;
         this.createStage();
         canvas.addEventListener('pointerdown', event => this.onPointerDown(event));
         canvas.addEventListener('pointermove', event => this.onPointerMove(event));
@@ -507,7 +552,7 @@
 
       setDice(dice) {
         this.dice.forEach(item => this.scene.remove(item.group));
-        const spacing = dice.length > 3 ? 1.7 : 2.05;
+        const spacing = dice.length > 3 ? 2.05 : 2.35;
         const start = -((dice.length - 1) * spacing) / 2;
         this.dice = dice.map((die, index) => {
           const group = createDieMesh(die, DIE_COLORS[die.key] || DIE_COLORS.Eigen);
@@ -545,6 +590,7 @@
         this.dragging = true;
         this.dragTarget = hit;
         this.lastX = event.clientX;
+        this.lastY = event.clientY;
         this.highlight(state.selectedKey);
         renderChoiceList(getAvailableDice());
         renderDiceNet(hit.userData.die);
@@ -554,8 +600,12 @@
       onPointerMove(event) {
         if (!this.dragging || !this.dragTarget) return;
         const dx = event.clientX - this.lastX;
+        const dy = event.clientY - this.lastY;
         this.dragTarget.rotation.y += dx * .015;
+        this.dragTarget.rotation.x += dy * .015;
+        this.dragTarget.rotation.z += (dx - dy) * .004;
         this.lastX = event.clientX;
+        this.lastY = event.clientY;
       }
 
       onPointerUp() {
@@ -579,10 +629,10 @@
         this.camera.position.set(0, 3.4, 7.4);
         this.camera.lookAt(0, .8, 0);
         this.dice = [];
-        this.createTableAndCup();
+        this.createTable();
       }
 
-      createTableAndCup() {
+      createTable() {
         const floor = new THREE.Mesh(
           new THREE.BoxGeometry(8, .22, 5),
           new THREE.MeshStandardMaterial({ color: 0x141d31, roughness: .78 })
@@ -591,24 +641,18 @@
         floor.receiveShadow = true;
         this.scene.add(floor);
 
-        const cupMaterial = new THREE.MeshStandardMaterial({ color: 0x3a2418, roughness: .55, metalness: .05, side: THREE.DoubleSide });
-        const cup = new THREE.Mesh(new THREE.CylinderGeometry(.82, .62, 1.45, 48, 1, true), cupMaterial);
-        cup.position.set(0, 3.25, -.25);
-        cup.rotation.x = .18;
-        cup.castShadow = true;
-        this.scene.add(cup);
-
-        const rim = new THREE.Mesh(new THREE.TorusGeometry(.82, .035, 12, 48), cupMaterial);
-        rim.position.copy(cup.position).add(new THREE.Vector3(0, .72, 0));
-        rim.rotation.x = Math.PI / 2 + .18;
-        this.scene.add(rim);
+        const guide = new THREE.GridHelper(7, 14, 0x8ff3ff, 0x26324d);
+        guide.position.y = .01;
+        guide.material.transparent = true;
+        guide.material.opacity = .18;
+        this.scene.add(guide);
       }
 
       setDice(player1Die, player2Die) {
         this.dice.forEach(item => this.scene.remove(item.group));
         this.dice = [
-          { die: player1Die, group: createDieMesh(player1Die, DIE_COLORS[player1Die.key] || DIE_COLORS.Eigen), x: -1.18 },
-          { die: player2Die, group: createDieMesh(player2Die, DIE_COLORS[player2Die.key] || DIE_COLORS.Eigen), x: 1.18 }
+          { die: player1Die, group: createDieMesh(player1Die, DIE_COLORS[player1Die.key] || DIE_COLORS.Eigen), x: -1.65 },
+          { die: player2Die, group: createDieMesh(player2Die, DIE_COLORS[player2Die.key] || DIE_COLORS.Eigen), x: 1.65 }
         ];
         this.dice.forEach(item => {
           item.group.position.set(item.x, .62, 0);
@@ -624,13 +668,14 @@
         const group = item.group;
         const start = performance.now();
         const duration = 2100;
-        const startX = dieIndex === 0 ? -.25 : .25;
+        const startX = dieIndex === 0 ? -1.65 : 1.65;
         const endX = item.x;
-        const endZ = dieIndex === 0 ? .25 : -.18;
+        const startZ = dieIndex === 0 ? -.95 : .95;
+        const endZ = dieIndex === 0 ? .5 : -.5;
         const spinAxis = new THREE.Vector3(Math.random() + .2, Math.random() + .6, Math.random() + .1).normalize();
         const startQ = new THREE.Quaternion().setFromAxisAngle(spinAxis, Math.PI * (6 + Math.random() * 2));
         const targetQ = quaternionForTopFace(faceIndex, dieIndex);
-        group.position.set(startX, 3.55, -.25);
+        group.position.set(startX, 3.55, startZ);
         group.quaternion.copy(startQ);
 
         return new Promise(resolve => {
@@ -638,7 +683,7 @@
             const t = Math.min(1, (now - start) / duration);
             const fall = easeOutBounce(t);
             const x = lerp(startX, endX, easeInOut(t));
-            const z = lerp(-.25, endZ, easeInOut(t));
+            const z = lerp(startZ, endZ, easeInOut(t));
             const y = 3.55 - 2.93 * fall + Math.sin(t * Math.PI * 5) * (1 - t) * .18;
             group.position.set(x, Math.max(.62, y), z);
             group.rotation.x += .16 * (1 - t) + .02;
@@ -727,6 +772,7 @@
       elements.rollButton.addEventListener('click', playRound);
       $('#masterButton').addEventListener('click', runMasterSimulation);
       $('#restartButton').addEventListener('click', resetToMode);
+      elements.playerNameInput.addEventListener('input', updateActivePlayerName);
     }
 
     function startMode(mode) {
@@ -735,6 +781,8 @@
       state.selectedKey = null;
       state.player1Die = null;
       state.player2Die = null;
+      state.player1Name = '';
+      state.player2Name = '';
       resetScores();
       showPage('select');
       updateSelectionUI();
@@ -755,18 +803,24 @@
       selectionScene.setDice(available);
       selectionScene.highlight(state.selectedKey);
       renderChoiceList(available);
-      renderDiceNet(getSelectedDie() || available[0]);
+      renderDiceNet(getSelectedDie() || available.find(die => die.key === 'Eigen') || available[0]);
 
-      const customMode = state.mode === 2;
-      elements.customPanel.classList.toggle('hidden', !customMode);
-      elements.selectNextButton.disabled = !state.selectedKey || (customMode && !isCustomValid());
-      elements.selectNextButton.textContent = state.mode === 1 && state.selectionStep === 'player1' ? 'Spieler 2 wählt' : 'Zum Spiel';
-      elements.selectionTitle.textContent = state.selectionStep === 'player1' ? 'Würfel wählen' : 'Gegenwürfel wählen';
-      elements.selectionHint.textContent = state.mode === 2 ? 'Standardwürfel wählen. Eigenen Würfel unten einstellen.' : 'Würfel anklicken oder drehen.';
+      const customStep = state.mode === 2 && state.selectionStep === 'custom';
+      elements.customPanel.classList.toggle('hidden', !customStep);
+      elements.choiceList.classList.toggle('hidden', customStep);
+      elements.nameLabel.textContent = activePlayerNumber() === 1 ? 'Name Spieler 1' : 'Name Spieler 2';
+      elements.playerNameInput.value = activePlayerNumber() === 1 ? state.player1Name : state.player2Name;
+      elements.selectNextButton.disabled = customStep ? !isCustomValid() : !state.selectedKey;
+      elements.selectNextButton.textContent = customStep ? 'Zum Spiel' : (state.mode === 1 && state.selectionStep === 'player1' ? 'Spieler 2 wählt' : 'Weiter');
+      elements.selectionTitle.textContent = customStep ? 'Eigenen Würfel bauen' : (state.selectionStep === 'player1' ? 'Würfel wählen' : 'Gegenwürfel wählen');
+      elements.selectionHint.textContent = customStep ? 'Ändere die Werte: Der grüne Würfel aktualisiert sich sofort.' : 'Würfel anklicken und in alle Richtungen drehen.';
       updateCustomSum();
     }
 
     function getAvailableDice() {
+      if (state.mode === 2 && state.selectionStep === 'custom') {
+        return [state.player1Die, { key: 'Eigen', label: 'Eigen', values: [...state.customValues] }];
+      }
       return Object.entries(STANDARD_DICE)
         .filter(([key]) => !(state.mode === 1 && state.selectionStep === 'player2' && state.player1Die?.key === key))
         .map(([key, values]) => ({ key, label: key, values }));
@@ -846,31 +900,52 @@
     }
 
     function getSelectedDie() {
+      if (state.selectedKey === 'Eigen') return { key: 'Eigen', label: 'Eigen', values: [...state.customValues] };
       const values = STANDARD_DICE[state.selectedKey];
       return values ? { key: state.selectedKey, label: state.selectedKey, values } : null;
     }
 
+    function activePlayerNumber() {
+      return state.selectionStep === 'player1' ? 1 : 2;
+    }
+
+    function updateActivePlayerName() {
+      if (activePlayerNumber() === 1) state.player1Name = elements.playerNameInput.value.trim();
+      else state.player2Name = elements.playerNameInput.value.trim();
+    }
+
+    function playerName(number) {
+      return (number === 1 ? state.player1Name : state.player2Name) || `Spieler ${number}`;
+    }
+
     function confirmSelection() {
+      updateActivePlayerName();
+      if (state.mode === 2 && state.selectionStep === 'custom') {
+        if (!isCustomValid()) return;
+        state.player2Die = { key: 'Eigen', label: 'Eigen', values: [...state.customValues] };
+        startGame();
+        return;
+      }
+
       const selected = getSelectedDie();
       if (!selected) return;
-      if (state.mode === 1 && state.selectionStep === 'player1') {
+      if (state.selectionStep === 'player1') {
         state.player1Die = selected;
         state.selectedKey = null;
-        state.selectionStep = 'player2';
+        state.selectionStep = state.mode === 2 ? 'custom' : 'player2';
+        if (state.mode === 2) state.selectedKey = 'Eigen';
         updateSelectionUI();
         return;
       }
 
-      state.player1Die ??= selected;
-      state.player2Die = state.mode === 2
-        ? { key: 'Eigen', label: 'Eigen', values: [...state.customValues] }
-        : selected;
+      state.player2Die = selected;
       startGame();
     }
 
     function startGame() {
       resetScores();
       playScene.setDice(state.player1Die, state.player2Die);
+      renderDiceSummaries();
       showPage('play');
       updateTally('Bereit.');
     }
@@ -879,7 +954,7 @@
       if (state.rolling || state.round >= state.maxRounds) return;
       state.rolling = true;
       elements.rollButton.disabled = true;
-      elements.lastRoll.textContent = 'Der Becher kippt ...';
+      elements.lastRoll.textContent = 'Die Würfel fallen ...';
 
       const roll1 = rollDie(state.player1Die);
       const roll2 = rollDie(state.player2Die);
@@ -887,8 +962,8 @@
 
       state.round += 1;
       let message = `${roll1.value} : ${roll2.value}`;
-      if (roll1.value > roll2.value) { state.wins1 += 1; message += ' · Spieler 1'; }
-      else if (roll2.value > roll1.value) { state.wins2 += 1; message += ' · Spieler 2'; }
+      if (roll1.value > roll2.value) { state.wins1 += 1; message += ` · ${playerName(1)}`; }
+      else if (roll2.value > roll1.value) { state.wins2 += 1; message += ` · ${playerName(2)}`; }
       else { state.draws += 1; message += ' · Gleichstand'; }
       updateTally(message);
 
@@ -919,7 +994,7 @@
 
     function showResult() {
       elements.rollButton.disabled = true;
-      const winner = state.wins1 > state.wins2 ? 'Spieler 1 gewinnt.' : state.wins2 > state.wins1 ? 'Spieler 2 gewinnt.' : 'Unentschieden.';
+      const winner = state.wins1 > state.wins2 ? `${playerName(1)} gewinnt.` : state.wins2 > state.wins1 ? `${playerName(2)} gewinnt.` : 'Unentschieden.';
       elements.resultTitle.textContent = winner;
       elements.resultGrid.innerHTML = resultCards({ wins1: state.wins1, wins2: state.wins2, draws: state.draws }, state.maxRounds);
       const exact = exactProbabilities(state.player1Die, state.player2Die);
@@ -927,6 +1002,7 @@
       elements.masterGrid.classList.add('hidden');
       elements.masterGrid.innerHTML = '';
       elements.masterText.textContent = '';
+      renderDiceSummaries();
       showPage('result');
     }
 
@@ -941,7 +1017,7 @@
       }
       elements.masterGrid.innerHTML = resultCards(result, 100);
       elements.masterGrid.classList.remove('hidden');
-      elements.masterText.textContent = result.wins1 > result.wins2 ? `${state.player1Die.label} war stärker.` : result.wins2 > result.wins1 ? `${state.player2Die.label} war stärker.` : 'Beide waren gleichauf.';
+      elements.masterText.textContent = result.wins1 > result.wins2 ? `${playerName(1)} war stärker.` : result.wins2 > result.wins1 ? `${playerName(2)} war stärker.` : 'Beide waren gleichauf.';
     }
 
     function exactProbabilities(die1, die2) {
@@ -956,10 +1032,29 @@
 
     function resultCards(result, total) {
       return [
-        ['Spieler 1', result.wins1],
-        ['Spieler 2', result.wins2],
+        [playerName(1), result.wins1],
+        [playerName(2), result.wins2],
         ['=', result.draws]
       ].map(([label, value]) => `<div class="result-card"><span>${label}</span><b>${value}</b><p>${(value / total * 100).toFixed(1)} %</p></div>`).join('');
+    }
+
+    function renderDiceSummaries() {
+      const html = [
+        summaryCard(playerName(1), state.player1Die, 1),
+        summaryCard(playerName(2), state.player2Die, 2)
+      ].join('');
+      elements.playDiceSummary.innerHTML = html;
+      elements.resultDiceSummary.innerHTML = html;
+    }
+
+    function summaryCard(name, die, number) {
+      if (!die) return '';
+      const color = `#${(DIE_COLORS[die.key] || DIE_COLORS.Eigen).toString(16).padStart(6, '0')}`;
+      return `<article class="summary-card"><div class="summary-head"><span>${name}</span><span style="color:${color}">Würfel ${die.label}</span></div>${diceNetHtml(die.values, 'mini-net')}</article>`;
+    }
+
+    function diceNetHtml(values, className = '') {
+      return `<div class="${className}">${values.map(value => `<div class="net-face">${netPipPositions(value).map(position => `<span class="net-pip"${position ? ` data-pos="${position}"` : ''}></span>`).join('')}</div>`).join('')}</div>`;
     }
 
     function resetScores() {
@@ -976,6 +1071,8 @@
       state.selectedKey = null;
       state.player1Die = null;
       state.player2Die = null;
+      state.player1Name = '';
+      state.player2Name = '';
       state.selectionStep = 'player1';
       resetScores();
       showPage('mode');
