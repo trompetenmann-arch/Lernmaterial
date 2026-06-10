@@ -3,483 +3,361 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3D-Würfelduell</title>
+  <title>Würfelduell 3D</title>
   <style>
-    /* Modernes, responsives Ein-Datei-Layout: alle Styles bleiben bewusst eingebettet. */
     :root {
       color-scheme: dark;
-      --bg: #0d1324;
-      --panel: rgba(19, 28, 52, 0.86);
-      --panel-strong: rgba(26, 39, 72, 0.95);
-      --accent: #68e1fd;
-      --accent-2: #a78bfa;
-      --success: #45f0a7;
-      --warning: #ffd166;
-      --danger: #ff6b8a;
-      --text: #edf3ff;
-      --muted: #a9b8d6;
-      --border: rgba(255, 255, 255, 0.12);
-      --shadow: 0 22px 60px rgba(0, 0, 0, 0.38);
+      --bg: #090d18;
+      --panel: rgba(15, 22, 39, .78);
+      --line: rgba(255,255,255,.12);
+      --text: #f5f7ff;
+      --muted: #9ba7c0;
+      --accent: #8ff3ff;
+      --accent2: #ffcf5c;
+      --good: #6af0a7;
+      --bad: #ff7892;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       min-height: 100vh;
-      background:
-        radial-gradient(circle at 16% 10%, rgba(104, 225, 253, 0.24), transparent 30rem),
-        radial-gradient(circle at 82% 4%, rgba(167, 139, 250, 0.22), transparent 34rem),
-        linear-gradient(135deg, #09101f 0%, #0d1324 48%, #151a31 100%);
       color: var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(143,243,255,.18), transparent 32rem),
+        radial-gradient(circle at 84% 20%, rgba(255,207,92,.13), transparent 28rem),
+        linear-gradient(145deg, #070a12, var(--bg) 48%, #131827);
     }
 
-    .app-shell {
-      width: min(1220px, calc(100% - 32px));
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .app {
+      width: min(1120px, calc(100% - 28px));
       margin: 0 auto;
-      padding: 28px 0 36px;
+      padding: 24px 0 34px;
     }
 
-    header.hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 20px;
+    .topbar {
+      display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 16px;
       margin-bottom: 18px;
-      padding: 28px;
-      border: 1px solid var(--border);
-      border-radius: 28px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.045));
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      position: relative;
     }
 
-    .hero::after {
-      content: "";
+    h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.5rem); letter-spacing: -.07em; line-height: .9; }
+    h2 { margin: 0; font-size: clamp(1.4rem, 3vw, 2.4rem); letter-spacing: -.045em; }
+    h3 { margin: 0; font-size: 1rem; }
+    p { margin: 0; color: var(--muted); line-height: 1.45; }
+
+    .steps {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .step-dot {
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.05);
+    }
+    .step-dot.active { color: #07101c; background: var(--accent); border-color: transparent; }
+
+    .page { display: none; animation: fade .28s ease both; }
+    .page.active { display: block; }
+    @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
+      box-shadow: 0 28px 80px rgba(0,0,0,.38);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .panel-pad { padding: clamp(18px, 3vw, 34px); }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .mode-card {
+      min-height: 190px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      color: var(--text);
+      background: rgba(255,255,255,.06);
+      text-align: left;
+      padding: 22px;
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .mode-card:hover { transform: translateY(-4px); border-color: rgba(143,243,255,.65); background: rgba(143,243,255,.09); }
+    .mode-card strong { display: block; font-size: 1.6rem; letter-spacing: -.035em; margin-bottom: 8px; }
+    .mode-card span { color: var(--muted); }
+
+    .selection-layout {
+      display: grid;
+      grid-template-columns: 1fr 310px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .canvas-wrap { position: relative; min-height: 560px; background: radial-gradient(circle at center, rgba(143,243,255,.1), rgba(0,0,0,.12)); }
+    #selectionCanvas, #playCanvas { width: 100%; height: 100%; min-height: 560px; display: block; }
+
+    .net-strip {
       position: absolute;
-      inset: auto -90px -120px auto;
-      width: 320px;
-      height: 320px;
-      background: radial-gradient(circle, rgba(104, 225, 253, 0.2), transparent 66%);
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: repeat(4, 42px);
+      grid-template-rows: repeat(3, 42px);
+      gap: 5px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(6,10,18,.62);
+      backdrop-filter: blur(12px);
       pointer-events: none;
     }
 
-    h1 {
-      margin: 0 0 10px;
-      font-size: clamp(2rem, 4vw, 4.25rem);
-      line-height: 0.95;
-      letter-spacing: -0.06em;
-    }
-
-    .hero p {
-      margin: 0;
-      max-width: 760px;
-      color: var(--muted);
-      font-size: 1.03rem;
-      line-height: 1.6;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 14px;
-      padding: 8px 12px;
-      border: 1px solid rgba(104, 225, 253, 0.28);
-      border-radius: 999px;
-      background: rgba(104, 225, 253, 0.11);
-      color: #cbf7ff;
-      font-size: 0.86rem;
-      font-weight: 700;
-    }
-
-    .hero-dice {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(2, 54px);
-      transform: rotate(-8deg);
-      z-index: 1;
-    }
-
-    .mini-die {
-      width: 54px;
-      height: 54px;
-      display: grid;
-      place-items: center;
-      border-radius: 14px;
-      background: linear-gradient(145deg, #f7fbff, #b9c5d9);
-      color: #182139;
-      font-weight: 900;
-      box-shadow: 0 14px 24px rgba(0,0,0,0.24);
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 360px minmax(0, 1fr);
-      gap: 18px;
-      align-items: start;
-    }
-
-    .stack { display: grid; gap: 18px; }
-
-    .card {
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(16px);
-      padding: 20px;
-    }
-
-    .card h2, .card h3 {
-      margin: 0 0 14px;
-      letter-spacing: -0.025em;
-    }
-
-    .card h2 { font-size: 1.22rem; }
-    .card h3 { font-size: 1rem; color: #dfe9ff; }
-
-    .mode-grid, .die-grid {
-      display: grid;
-      gap: 10px;
-    }
-
-    .mode-card, .die-card {
-      width: 100%;
-      padding: 14px;
-      text-align: left;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.06);
-      cursor: pointer;
-      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
-    }
-
-    .mode-card:hover, .die-card:hover:not(:disabled) {
-      transform: translateY(-2px);
-      border-color: rgba(104, 225, 253, 0.58);
-      background: rgba(104, 225, 253, 0.10);
-    }
-
-    .mode-card.active, .die-card.active {
-      border-color: var(--accent);
-      background: linear-gradient(135deg, rgba(104, 225, 253, 0.18), rgba(167, 139, 250, 0.12));
-      box-shadow: 0 0 0 1px rgba(104, 225, 253, 0.2) inset;
-    }
-
-    .die-card:disabled {
-      opacity: 0.42;
-      cursor: not-allowed;
-    }
-
-    .mode-title, .die-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 8px;
-      font-weight: 800;
-    }
-
-    .die-values {
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    button.primary, button.secondary, button.ghost {
-      min-height: 42px;
-      border: 0;
-      border-radius: 14px;
-      padding: 10px 14px;
-      color: #07101f;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform 0.18s ease, filter 0.18s ease, opacity 0.18s ease;
-    }
-
-    button.primary {
-      background: linear-gradient(135deg, var(--accent), #8af7cf);
-      box-shadow: 0 14px 28px rgba(104, 225, 253, 0.18);
-    }
-
-    button.secondary {
-      background: linear-gradient(135deg, #d8ccff, var(--accent-2));
-    }
-
-    button.ghost {
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--border);
-    }
-
-    button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.05); }
-    button:disabled { cursor: not-allowed; opacity: 0.46; }
-
-    .setup-note, .hint, .validation {
-      color: var(--muted);
-      line-height: 1.5;
-      font-size: 0.94rem;
-    }
-
-    .validation.valid { color: var(--success); }
-    .validation.invalid { color: var(--warning); }
-
-    .custom-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin: 12px 0;
-    }
-
-    label.face-input {
-      display: grid;
-      gap: 6px;
-      color: var(--muted);
-      font-size: 0.82rem;
-      font-weight: 700;
-    }
-
-    .face-input input {
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px;
-      background: rgba(255,255,255,0.08);
-      color: var(--text);
-      font: inherit;
-      font-weight: 800;
-    }
-
-    .scene-card { padding: 0; overflow: hidden; }
-
-    .scene-toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 20px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(255,255,255,0.045);
-    }
-
-    #sceneContainer {
-      min-height: 430px;
-      height: clamp(430px, 54vw, 560px);
+    .net-face {
       position: relative;
+      border-radius: 9px;
+      background: rgba(255,255,255,.9);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
     }
+    .net-pip { position: absolute; width: 5px; height: 5px; border-radius: 999px; background: #111827; }
+    .net-pip:nth-child(1) { left: 50%; top: 50%; transform: translate(-50%, -50%); }
+    .net-pip[data-pos="tl"] { left: 11px; top: 11px; }
+    .net-pip[data-pos="tr"] { right: 11px; top: 11px; }
+    .net-pip[data-pos="ml"] { left: 11px; top: 50%; transform: translateY(-50%); }
+    .net-pip[data-pos="mr"] { right: 11px; top: 50%; transform: translateY(-50%); }
+    .net-pip[data-pos="bl"] { left: 11px; bottom: 11px; }
+    .net-pip[data-pos="br"] { right: 11px; bottom: 11px; }
+    .net-face:nth-child(1) { grid-column: 2; grid-row: 1; }
+    .net-face:nth-child(2) { grid-column: 1; grid-row: 2; }
+    .net-face:nth-child(3) { grid-column: 2; grid-row: 2; }
+    .net-face:nth-child(4) { grid-column: 3; grid-row: 2; }
+    .net-face:nth-child(5) { grid-column: 4; grid-row: 2; }
+    .net-face:nth-child(6) { grid-column: 2; grid-row: 3; }
 
-    #sceneContainer canvas { display: block; width: 100%; height: 100%; }
-
-    .round-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 42px;
-      padding: 9px 13px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid var(--border);
-      color: #e9f2ff;
-      font-weight: 800;
-    }
-
-    .status-grid {
+    .side {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
+      gap: 14px;
+      align-content: start;
+      padding: 22px;
+      border-left: 1px solid var(--line);
+      background: rgba(0,0,0,.12);
     }
 
-    .stat {
-      padding: 14px;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: rgba(255,255,255,0.06);
-      min-height: 86px;
-    }
-
-    .stat .label {
-      color: var(--muted);
-      font-size: 0.78rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .stat .value {
-      margin-top: 8px;
-      font-size: clamp(1.15rem, 2.3vw, 1.65rem);
-      font-weight: 900;
-      letter-spacing: -0.03em;
-    }
-
-    .log {
-      display: grid;
-      gap: 10px;
-      max-height: 220px;
-      overflow: auto;
-      padding-right: 4px;
-    }
-
-    .log-entry {
+    .choice-list { display: grid; gap: 10px; }
+    .choice-btn {
       display: flex;
+      align-items: center;
       justify-content: space-between;
       gap: 12px;
+      min-height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      color: var(--text);
+      background: rgba(255,255,255,.06);
       padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.055);
-      color: #dbe7ff;
-      font-size: 0.92rem;
+    }
+    .choice-btn.active { border-color: var(--accent); background: rgba(143,243,255,.12); }
+    .choice-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .swatch { display: inline-block; width: 18px; height: 18px; margin-right: 8px; border-radius: 6px; vertical-align: -3px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); }
+
+    .custom-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .custom-grid input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      padding: 10px;
+      text-align: center;
+      font-weight: 900;
     }
 
-    .prob-grid, .master-grid {
+    .sum { font-weight: 900; color: var(--accent2); }
+    .sum.ok { color: var(--good); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .primary, .secondary, .ghost {
+      border: 0;
+      border-radius: 999px;
+      min-height: 46px;
+      padding: 0 18px;
+      font-weight: 900;
+      transition: transform .2s ease, opacity .2s ease, filter .2s ease;
+    }
+    .primary { color: #061019; background: linear-gradient(135deg, var(--accent), #74f0aa); }
+    .secondary { color: #151005; background: linear-gradient(135deg, #ffe08a, var(--accent2)); }
+    .ghost { color: var(--text); background: rgba(255,255,255,.08); border: 1px solid var(--line); }
+    button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.06); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    .play-layout { display: grid; grid-template-columns: 1fr 260px; gap: 18px; }
+    .play-side { padding: 22px; border-left: 1px solid var(--line); background: rgba(0,0,0,.12); }
+
+    .tally {
+      display: grid;
+      gap: 14px;
+      margin: 18px 0;
+    }
+    .tally-row {
+      display: grid;
+      grid-template-columns: 40px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .tally-row b { font-size: 1.55rem; }
+    .marks { min-height: 28px; color: var(--accent2); font-size: 1.7rem; letter-spacing: .08em; word-break: break-word; }
+
+    .round-chip {
+      display: inline-grid;
+      place-items: center;
+      min-width: 80px;
+      height: 38px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid var(--line);
+      font-weight: 900;
+    }
+
+    .last { color: var(--muted); min-height: 48px; }
+
+    .result-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      gap: 14px;
+      margin: 22px 0;
     }
-
-    .meter {
-      height: 8px;
-      border-radius: 999px;
-      margin-top: 10px;
-      background: rgba(255,255,255,0.10);
-      overflow: hidden;
+    .result-card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,.06);
+      padding: 18px;
     }
+    .result-card span { display: block; color: var(--muted); font-size: .82rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+    .result-card b { display: block; margin-top: 8px; font-size: 2.3rem; letter-spacing: -.05em; }
 
-    .meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--success)); }
-
+    .master-box { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .small { font-size: .9rem; color: var(--muted); }
     .hidden { display: none !important; }
 
-    @media (max-width: 980px) {
-      .layout { grid-template-columns: 1fr; }
-      header.hero { grid-template-columns: 1fr; }
-      .hero-dice { display: none; }
-      .status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    @media (max-width: 620px) {
-      .app-shell { width: min(100% - 18px, 1220px); padding-top: 10px; }
-      header.hero, .card { border-radius: 20px; padding: 16px; }
-      .scene-toolbar { padding: 14px; }
-      #sceneContainer { min-height: 360px; height: 420px; }
-      .status-grid, .prob-grid, .master-grid, .custom-grid { grid-template-columns: 1fr; }
+    @media (max-width: 900px) {
+      .selection-layout, .play-layout, .mode-grid { grid-template-columns: 1fr; }
+      .side, .play-side { border-left: 0; border-top: 1px solid var(--line); }
+      .canvas-wrap, #selectionCanvas, #playCanvas { min-height: 460px; }
+      .result-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <main class="app-shell">
-    <header class="hero">
-      <div>
-        <div class="badge">🎲 Nichttransitive Würfel · interaktiv</div>
-        <h1>3D-Würfelduell</h1>
-        <p>Wähle vorgegebene Spezialwürfel oder gestalte einen eigenen Würfel mit genau 18 Punkten. Jeder Wurf wird als echte Three.js-3D-Animation dargestellt; die obenliegende Seite passt exakt zum Ergebnis.</p>
-      </div>
-      <div class="hero-dice" aria-hidden="true">
-        <div class="mini-die">A</div><div class="mini-die">B</div><div class="mini-die">C</div><div class="mini-die">D</div>
-      </div>
+  <main class="app">
+    <header class="topbar">
+      <h1>Würfelduell</h1>
+      <nav class="steps" aria-label="Spielschritte">
+        <span class="step-dot" data-step="mode">1 Modus</span>
+        <span class="step-dot" data-step="select">2 Auswahl</span>
+        <span class="step-dot" data-step="play">3 Würfeln</span>
+        <span class="step-dot" data-step="result">4 Auswertung</span>
+      </nav>
     </header>
 
-    <section class="layout">
-      <aside class="stack">
-        <section class="card" aria-labelledby="modeTitle">
-          <h2 id="modeTitle">1. Modusauswahl</h2>
-          <div class="mode-grid">
-            <button class="mode-card" id="mode1Button" type="button">
-              <span class="mode-title">Modus 1 starten <span>4 Würfel</span></span>
-              <span class="die-values">Spieler 1 wählt A–D, Spieler 2 wählt danach einen übrigen Würfel.</span>
-            </button>
-            <button class="mode-card" id="mode2Button" type="button">
-              <span class="mode-title">Modus 2 starten <span>eigener Würfel</span></span>
-              <span class="die-values">Spieler 1 wählt einen Standardwürfel, Spieler 2 verteilt genau 18 Punkte.</span>
-            </button>
-          </div>
-        </section>
+    <section class="page active" id="modePage">
+      <div class="panel panel-pad">
+        <h2>Modus wählen</h2>
+        <div class="mode-grid">
+          <button class="mode-card" id="mode1Button" type="button">
+            <strong>Modus 1</strong>
+            <span>Zwei Standardwürfel. Spieler 1 wählt zuerst.</span>
+          </button>
+          <button class="mode-card" id="mode2Button" type="button">
+            <strong>Modus 2</strong>
+            <span>Spieler 2 baut einen eigenen Würfel mit 18 Punkten.</span>
+          </button>
+        </div>
+      </div>
+    </section>
 
-        <section class="card" aria-labelledby="selectionTitle">
-          <h2 id="selectionTitle">2. Würfelauswahl</h2>
-          <p class="setup-note" id="selectionInstruction">Wähle zuerst einen Modus.</p>
-          <div class="die-grid" id="standardDiceGrid"></div>
-          <div id="customDiePanel" class="hidden">
-            <h3>Eigenen Würfel gestalten</h3>
-            <p class="hint">Trage sechs ganze Zahlen ≥ 0 ein. Die Summe muss genau 18 betragen.</p>
+    <section class="page" id="selectPage">
+      <div class="panel selection-layout">
+        <div class="canvas-wrap">
+          <div class="net-strip" id="diceNet" aria-hidden="true"></div>
+          <canvas id="selectionCanvas"></canvas>
+        </div>
+        <aside class="side">
+          <h2 id="selectionTitle">Würfel wählen</h2>
+          <p id="selectionHint">Klicke einen Würfel.</p>
+          <div class="choice-list" id="choiceList"></div>
+          <div id="customPanel" class="hidden">
+            <h3>Eigener Würfel</h3>
             <div class="custom-grid" id="customInputs"></div>
-            <p class="validation invalid" id="customValidation">Summe: 0 / 18</p>
+            <p class="sum" id="customSum">0 / 18</p>
           </div>
-          <div class="btn-row">
-            <button class="primary" id="confirmSelectionButton" type="button" disabled>Würfel wählen</button>
-            <button class="ghost" id="newGameButton" type="button">Neues Spiel</button>
+          <div class="actions">
+            <button class="primary" id="selectNextButton" type="button" disabled>Weiter</button>
+            <button class="ghost" id="backToModeButton" type="button">Zurück</button>
           </div>
-        </section>
+        </aside>
+      </div>
+    </section>
 
-        <section class="card" aria-labelledby="probTitle">
-          <h2 id="probTitle">Wahrscheinlichkeiten</h2>
-          <button class="ghost" id="toggleProbabilityButton" type="button">Wahrscheinlichkeiten anzeigen</button>
-          <div id="probabilityPanel" class="hidden" style="margin-top: 14px;">
-            <p class="hint">Exakte Berechnung über alle 36 möglichen Paarwürfe.</p>
-            <div class="prob-grid" id="probabilityGrid"></div>
+    <section class="page" id="playPage">
+      <div class="panel play-layout">
+        <canvas id="playCanvas"></canvas>
+        <aside class="play-side">
+          <div class="round-chip" id="roundChip">0 / 11</div>
+          <div class="tally">
+            <div class="tally-row"><b>1</b><div class="marks" id="marks1"></div><strong id="score1">0</strong></div>
+            <div class="tally-row"><b>2</b><div class="marks" id="marks2"></div><strong id="score2">0</strong></div>
+            <div class="tally-row"><b>=</b><div class="marks" id="marksDraw"></div><strong id="scoreDraw">0</strong></div>
           </div>
-        </section>
-      </aside>
+          <p class="last" id="lastRoll">Bereit.</p>
+          <button class="primary" id="rollButton" type="button">Würfeln</button>
+        </aside>
+      </div>
+    </section>
 
-      <section class="stack">
-        <section class="card scene-card" aria-labelledby="gameTitle">
-          <div class="scene-toolbar">
-            <div>
-              <h2 id="gameTitle" style="margin-bottom: 4px;">3. Spielbereich mit 3D-Szene</h2>
-              <div class="hint" id="gameHint">Nach der Würfelwahl startet das Duell über 11 Runden.</div>
-            </div>
-            <div class="btn-row" style="margin-top: 0;">
-              <span class="round-pill" id="roundPill">Runde 0 / 11</span>
-              <button class="primary" id="rollButton" type="button" disabled>Runde werfen</button>
-            </div>
-          </div>
-          <div id="sceneContainer" aria-label="Three.js-Szene mit zwei Würfeln"></div>
-        </section>
-
-        <section class="card" aria-labelledby="statsTitle">
-          <h2 id="statsTitle">4. Ergebnis- und Statistikbereich</h2>
-          <div class="status-grid" id="statusGrid"></div>
-        </section>
-
-        <section class="card" aria-labelledby="logTitle">
-          <h2 id="logTitle">Rundenprotokoll</h2>
-          <div class="log" id="roundLog"><div class="hint">Noch keine Würfe.</div></div>
-        </section>
-
-        <section class="card hidden" id="masterPanel" aria-labelledby="masterTitle">
-          <h2 id="masterTitle">5. Mastersimulation</h2>
-          <p class="hint">100 schnelle Paarwürfe mit den aktuell ausgewählten Würfeln, ohne langsame Einzelanimation.</p>
-          <div class="btn-row">
-            <button class="secondary" id="masterButton" type="button">Mastersimulation starten</button>
-          </div>
-          <div class="master-grid" id="masterResults" style="margin-top: 14px;"></div>
-          <p class="hint" id="masterInterpretation"></p>
-        </section>
-      </section>
+    <section class="page" id="resultPage">
+      <div class="panel panel-pad">
+        <h2 id="resultTitle">Auswertung</h2>
+        <div class="result-grid" id="resultGrid"></div>
+        <p id="probabilityText" class="small"></p>
+        <div class="master-box">
+          <button class="secondary" id="masterButton" type="button">Mastersimulation starten</button>
+          <div class="result-grid hidden" id="masterGrid"></div>
+          <p id="masterText" class="small"></p>
+        </div>
+        <div class="actions">
+          <button class="primary" id="restartButton" type="button">Weiter zur Modusauswahl</button>
+        </div>
+      </div>
     </section>
   </main>
 
   <script type="module">
-    /*
-      Die App ist in vier Bereiche getrennt:
-      1. Konstanten und Spielzustand
-      2. Three.js-Szene mit einfacher eigener Wurf-Physik
-      3. Spiel- und Simulationslogik
-      4. DOM-Rendering und Validierung
-    */
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 
-    // Die vier vorgegebenen Spezialwürfel aus der Aufgabenstellung.
     const STANDARD_DICE = {
       A: [3, 3, 3, 3, 3, 3],
       B: [0, 0, 4, 4, 4, 4],
@@ -487,258 +365,107 @@
       D: [6, 6, 2, 2, 2, 2]
     };
 
-    // Jede Würfelseite erhält eine feste lokale Normalenrichtung; damit kann das Ergebnis exakt nach oben gedreht werden.
-    const FACE_DEFINITIONS = [
-      { name: 'oben', normal: new THREE.Vector3(0, 1, 0), rotation: new THREE.Euler(-Math.PI / 2, 0, 0), position: [0, 0.505, 0] },
-      { name: 'unten', normal: new THREE.Vector3(0, -1, 0), rotation: new THREE.Euler(Math.PI / 2, 0, 0), position: [0, -0.505, 0] },
-      { name: 'vorn', normal: new THREE.Vector3(0, 0, 1), rotation: new THREE.Euler(0, 0, 0), position: [0, 0, 0.505] },
-      { name: 'hinten', normal: new THREE.Vector3(0, 0, -1), rotation: new THREE.Euler(0, Math.PI, 0), position: [0, 0, -0.505] },
-      { name: 'rechts', normal: new THREE.Vector3(1, 0, 0), rotation: new THREE.Euler(0, Math.PI / 2, 0), position: [0.505, 0, 0] },
-      { name: 'links', normal: new THREE.Vector3(-1, 0, 0), rotation: new THREE.Euler(0, -Math.PI / 2, 0), position: [-0.505, 0, 0] }
-    ];
-
-    // Punktmuster für Werte von 0 bis 6; die 0 bleibt absichtlich leer.
-    const PIP_LAYOUTS = {
-      0: [],
-      1: [[0, 0]],
-      2: [[-0.18, -0.18], [0.18, 0.18]],
-      3: [[-0.2, -0.2], [0, 0], [0.2, 0.2]],
-      4: [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]],
-      5: [[-0.22, -0.22], [0.22, -0.22], [0, 0], [-0.22, 0.22], [0.22, 0.22]],
-      6: [[-0.22, -0.24], [0.22, -0.24], [-0.22, 0], [0.22, 0], [-0.22, 0.24], [0.22, 0.24]]
+    const DIE_COLORS = {
+      A: 0xff6b6b,
+      B: 0x57d3ff,
+      C: 0xb28dff,
+      D: 0xffcf5c,
+      Eigen: 0x6af0a7
     };
 
-    // Zentraler Spielzustand: UI, Animation und Simulation lesen/schreiben ausschließlich hierüber.
+    const FACE_DEFINITIONS = [
+      { normal: new THREE.Vector3(0, 1, 0), rotation: new THREE.Euler(-Math.PI / 2, 0, 0), position: [0, .505, 0] },
+      { normal: new THREE.Vector3(0, -1, 0), rotation: new THREE.Euler(Math.PI / 2, 0, 0), position: [0, -.505, 0] },
+      { normal: new THREE.Vector3(0, 0, 1), rotation: new THREE.Euler(0, 0, 0), position: [0, 0, .505] },
+      { normal: new THREE.Vector3(0, 0, -1), rotation: new THREE.Euler(0, Math.PI, 0), position: [0, 0, -.505] },
+      { normal: new THREE.Vector3(1, 0, 0), rotation: new THREE.Euler(0, Math.PI / 2, 0), position: [.505, 0, 0] },
+      { normal: new THREE.Vector3(-1, 0, 0), rotation: new THREE.Euler(0, -Math.PI / 2, 0), position: [-.505, 0, 0] }
+    ];
+
+    const PIPS = {
+      0: [],
+      1: [[0, 0]],
+      2: [[-.19, -.19], [.19, .19]],
+      3: [[-.2, -.2], [0, 0], [.2, .2]],
+      4: [[-.21, -.21], [.21, -.21], [-.21, .21], [.21, .21]],
+      5: [[-.22, -.22], [.22, -.22], [0, 0], [-.22, .22], [.22, .22]],
+      6: [[-.22, -.24], [.22, -.24], [-.22, 0], [.22, 0], [-.22, .24], [.22, .24]]
+    };
+
     const state = {
-      mode: null,
-      selectionStep: 'mode',
+      page: 'mode',
+      mode: 0,
+      selectionStep: 'player1',
+      selectedKey: null,
       player1Die: null,
       player2Die: null,
-      selectedStandardKey: null,
       customValues: [3, 3, 3, 3, 3, 3],
       round: 0,
       maxRounds: 11,
       wins1: 0,
       wins2: 0,
       draws: 0,
-      lastRoll: null,
-      lastWinner: 'Noch nicht gespielt',
-      gameActive: false,
-      gameFinished: false,
-      isRolling: false,
-      probabilitiesVisible: false
+      rolling: false
     };
 
+    const $ = selector => document.querySelector(selector);
     const elements = {
-      mode1Button: document.querySelector('#mode1Button'),
-      mode2Button: document.querySelector('#mode2Button'),
-      standardDiceGrid: document.querySelector('#standardDiceGrid'),
-      selectionInstruction: document.querySelector('#selectionInstruction'),
-      customDiePanel: document.querySelector('#customDiePanel'),
-      customInputs: document.querySelector('#customInputs'),
-      customValidation: document.querySelector('#customValidation'),
-      confirmSelectionButton: document.querySelector('#confirmSelectionButton'),
-      newGameButton: document.querySelector('#newGameButton'),
-      rollButton: document.querySelector('#rollButton'),
-      roundPill: document.querySelector('#roundPill'),
-      gameHint: document.querySelector('#gameHint'),
-      statusGrid: document.querySelector('#statusGrid'),
-      roundLog: document.querySelector('#roundLog'),
-      masterPanel: document.querySelector('#masterPanel'),
-      masterButton: document.querySelector('#masterButton'),
-      masterResults: document.querySelector('#masterResults'),
-      masterInterpretation: document.querySelector('#masterInterpretation'),
-      toggleProbabilityButton: document.querySelector('#toggleProbabilityButton'),
-      probabilityPanel: document.querySelector('#probabilityPanel'),
-      probabilityGrid: document.querySelector('#probabilityGrid')
+      pages: document.querySelectorAll('.page'),
+      stepDots: document.querySelectorAll('.step-dot'),
+      choiceList: $('#choiceList'),
+      selectionTitle: $('#selectionTitle'),
+      selectionHint: $('#selectionHint'),
+      diceNet: $('#diceNet'),
+      customPanel: $('#customPanel'),
+      customInputs: $('#customInputs'),
+      customSum: $('#customSum'),
+      selectNextButton: $('#selectNextButton'),
+      roundChip: $('#roundChip'),
+      marks1: $('#marks1'),
+      marks2: $('#marks2'),
+      marksDraw: $('#marksDraw'),
+      score1: $('#score1'),
+      score2: $('#score2'),
+      scoreDraw: $('#scoreDraw'),
+      lastRoll: $('#lastRoll'),
+      rollButton: $('#rollButton'),
+      resultTitle: $('#resultTitle'),
+      resultGrid: $('#resultGrid'),
+      probabilityText: $('#probabilityText'),
+      masterGrid: $('#masterGrid'),
+      masterText: $('#masterText')
     };
 
-    let sceneManager;
-
-    // Kapselt die komplette 3D-Darstellung inklusive einer kleinen physik-inspirierten Wurfanimation.
-    class DiceScene {
-      constructor(container) {
-        this.container = container;
+    class BaseScene {
+      constructor(canvas) {
+        this.canvas = canvas;
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x0d1324);
-        this.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-        this.camera.position.set(0, 3.2, 6.5);
-        this.camera.lookAt(0, 0.45, 0);
-
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        this.scene.background = new THREE.Color(0x090d18);
+        this.camera = new THREE.PerspectiveCamera(42, 1, .1, 100);
+        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.container.appendChild(this.renderer.domElement);
-
         this.clock = new THREE.Clock();
         this.animations = [];
-        this.dice = [];
-        this.configureLights();
-        this.createTable();
-        this.createDicePair({ label: 'A', values: STANDARD_DICE.A }, { label: 'B', values: STANDARD_DICE.B });
-        this.resize();
+        this.addLights();
         window.addEventListener('resize', () => this.resize());
+        this.resize();
         this.renderer.setAnimationLoop(() => this.render());
       }
 
-      configureLights() {
-        const ambient = new THREE.HemisphereLight(0xdcecff, 0x12182d, 2.15);
-        this.scene.add(ambient);
-
-        const key = new THREE.DirectionalLight(0xffffff, 2.4);
+      addLights() {
+        this.scene.add(new THREE.HemisphereLight(0xeef7ff, 0x121827, 2.3));
+        const key = new THREE.DirectionalLight(0xffffff, 2.8);
         key.position.set(4, 7, 5);
         key.castShadow = true;
-        key.shadow.mapSize.set(2048, 2048);
+        key.shadow.mapSize.set(1024, 1024);
         this.scene.add(key);
-
-        const rim = new THREE.PointLight(0x68e1fd, 7.5, 18);
-        rim.position.set(-4, 2.8, -3);
-        this.scene.add(rim);
-      }
-
-      createTable() {
-        const floorGeometry = new THREE.BoxGeometry(8, 0.22, 4.8);
-        const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x17233f, roughness: 0.72, metalness: 0.12 });
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-        floor.position.y = -0.14;
-        floor.receiveShadow = true;
-        this.scene.add(floor);
-
-        const grid = new THREE.GridHelper(8, 16, 0x68e1fd, 0x2c385f);
-        grid.position.y = 0.005;
-        grid.material.opacity = 0.22;
-        grid.material.transparent = true;
-        this.scene.add(grid);
-      }
-
-      createDicePair(player1Die, player2Die) {
-        this.dice.forEach(die => this.scene.remove(die.group));
-        this.dice = [
-          this.createDie(player1Die, -1.45, 0xfffbf2, 0x111827),
-          this.createDie(player2Die, 1.45, 0xf4f0ff, 0x171322)
-        ];
-        this.dice.forEach(die => this.scene.add(die.group));
-      }
-
-      createDie(dieData, x, color, pipColor) {
-        const group = new THREE.Group();
-        group.position.set(x, 0.55, 0);
-        group.userData.baseX = x;
-
-        const body = new THREE.Mesh(
-          new THREE.BoxGeometry(1, 1, 1, 6, 6, 6),
-          new THREE.MeshStandardMaterial({ color, roughness: 0.46, metalness: 0.04 })
-        );
-        body.castShadow = true;
-        body.receiveShadow = true;
-        group.add(body);
-
-        const edge = new THREE.LineSegments(
-          new THREE.EdgesGeometry(new THREE.BoxGeometry(1.012, 1.012, 1.012)),
-          new THREE.LineBasicMaterial({ color: 0x22304d, transparent: true, opacity: 0.28 })
-        );
-        group.add(edge);
-
-        FACE_DEFINITIONS.forEach((face, index) => {
-          const value = dieData.values[index];
-          const faceGroup = new THREE.Group();
-          faceGroup.position.set(...face.position);
-          faceGroup.rotation.copy(face.rotation);
-          this.addPips(faceGroup, value, pipColor);
-          group.add(faceGroup);
-        });
-
-        return { group, dieData };
-      }
-
-      addPips(faceGroup, value, pipColor) {
-        const pipGeometry = new THREE.CircleGeometry(0.058, 28);
-        const pipMaterial = new THREE.MeshStandardMaterial({ color: pipColor, roughness: 0.38 });
-        const positions = PIP_LAYOUTS[value] || this.createNumericFallbackLayout(value);
-        positions.forEach(([x, y]) => {
-          const pip = new THREE.Mesh(pipGeometry, pipMaterial);
-          pip.position.set(x, y, 0.012);
-          faceGroup.add(pip);
-        });
-      }
-
-      createNumericFallbackLayout(value) {
-        const count = Math.max(0, Math.min(12, Number(value) || 0));
-        const positions = [];
-        for (let i = 0; i < count; i += 1) {
-          const col = i % 4;
-          const row = Math.floor(i / 4);
-          positions.push([(col - 1.5) * 0.14, (row - 1) * 0.16]);
-        }
-        return positions;
-      }
-
-      // Animiert beide Würfel und dreht am Ende genau die ausgewürfelte Seite nach oben.
-      async roll(resultIndices) {
-        const duration = 1850;
-        const promises = this.dice.map((die, dieIndex) => this.animateDie(die, resultIndices[dieIndex], duration, dieIndex));
-        await Promise.all(promises);
-      }
-
-      animateDie(die, resultIndex, duration, dieIndex) {
-        const group = die.group;
-        const startQuaternion = group.quaternion.clone();
-        const targetQuaternion = this.quaternionForTopFace(resultIndex, dieIndex);
-        const randomAxis = new THREE.Vector3(Math.random() + 0.2, Math.random() + 0.3, Math.random() + 0.4).normalize();
-        const spinQuaternion = new THREE.Quaternion().setFromAxisAngle(randomAxis, Math.PI * (4.5 + Math.random() * 2.5));
-        const middleQuaternion = startQuaternion.clone().multiply(spinQuaternion);
-        const startTime = performance.now();
-        const baseX = group.userData.baseX;
-        const lateral = (Math.random() - 0.5) * 0.26;
-
-        return new Promise(resolve => {
-          this.animations.push({
-            update: now => {
-              const t = Math.min(1, (now - startTime) / duration);
-              const eased = this.easeInOutCubic(t);
-              const hop = Math.sin(Math.PI * t) * (1.15 + dieIndex * 0.12);
-              const wobble = Math.sin(t * Math.PI * 5) * (1 - t) * 0.08;
-
-              group.position.set(baseX + lateral * Math.sin(Math.PI * t), 0.55 + hop, wobble);
-              group.quaternion.slerpQuaternions(startQuaternion, middleQuaternion, Math.min(1, t * 1.35));
-              if (t > 0.54) {
-                const settle = this.easeOutBack((t - 0.54) / 0.46);
-                group.quaternion.slerpQuaternions(middleQuaternion, targetQuaternion, settle);
-              }
-
-              if (t >= 1) {
-                group.position.set(baseX, 0.55, 0);
-                group.quaternion.copy(targetQuaternion);
-                resolve();
-                return true;
-              }
-              return false;
-            }
-          });
-        });
-      }
-
-      // Berechnet die Zielrotation: lokale Flächennormale der gewürfelten Seite wird auf Welt-Oben abgebildet.
-      quaternionForTopFace(faceIndex, dieIndex) {
-        const face = FACE_DEFINITIONS[faceIndex];
-        const quaternion = new THREE.Quaternion().setFromUnitVectors(face.normal, new THREE.Vector3(0, 1, 0));
-        const topSpin = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), (dieIndex === 0 ? -1 : 1) * Math.PI / 12);
-        return topSpin.multiply(quaternion);
-      }
-
-      easeInOutCubic(t) {
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-      }
-
-      easeOutBack(t) {
-        const c1 = 1.70158;
-        const c3 = c1 + 1;
-        return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
       }
 
       resize() {
-        const { width, height } = this.container.getBoundingClientRect();
+        const rect = this.canvas.getBoundingClientRect();
+        const width = Math.max(1, rect.width);
+        const height = Math.max(1, rect.height);
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height, false);
@@ -746,166 +473,428 @@
 
       render() {
         const now = performance.now();
-        this.animations = this.animations.filter(animation => !animation.update(now));
-        const elapsed = this.clock.getElapsedTime();
-        if (!state.isRolling) {
-          this.dice.forEach((die, index) => {
-            die.group.position.y = 0.55 + Math.sin(elapsed * 1.4 + index) * 0.018;
-          });
-        }
+        this.animations = this.animations.filter(animation => !animation(now));
         this.renderer.render(this.scene, this.camera);
       }
     }
 
-    function initializeApp() {
-      renderStandardDiceButtons();
+    class SelectionScene extends BaseScene {
+      constructor(canvas) {
+        super(canvas);
+        this.camera.position.set(0, 2.9, 7);
+        this.camera.lookAt(0, .6, 0);
+        this.raycaster = new THREE.Raycaster();
+        this.pointer = new THREE.Vector2();
+        this.dice = [];
+        this.dragging = false;
+        this.dragTarget = null;
+        this.lastX = 0;
+        this.createStage();
+        canvas.addEventListener('pointerdown', event => this.onPointerDown(event));
+        canvas.addEventListener('pointermove', event => this.onPointerMove(event));
+        window.addEventListener('pointerup', () => this.onPointerUp());
+      }
+
+      createStage() {
+        const floor = new THREE.Mesh(
+          new THREE.CylinderGeometry(3.8, 4.2, .18, 80),
+          new THREE.MeshStandardMaterial({ color: 0x151d31, roughness: .75 })
+        );
+        floor.position.y = -.08;
+        floor.receiveShadow = true;
+        this.scene.add(floor);
+      }
+
+      setDice(dice) {
+        this.dice.forEach(item => this.scene.remove(item.group));
+        const spacing = dice.length > 3 ? 1.7 : 2.05;
+        const start = -((dice.length - 1) * spacing) / 2;
+        this.dice = dice.map((die, index) => {
+          const group = createDieMesh(die, DIE_COLORS[die.key] || DIE_COLORS.Eigen);
+          group.position.set(start + index * spacing, .7, 0);
+          group.userData.key = die.key;
+          group.userData.die = die;
+          this.scene.add(group);
+          return { group, die };
+        });
+      }
+
+      highlight(key) {
+        this.dice.forEach(({ group }) => {
+          const selected = group.userData.key === key;
+          group.scale.setScalar(selected ? 1.22 : 1);
+          group.position.y = selected ? .86 : .7;
+        });
+      }
+
+      render() {
+        const delta = this.clock.getDelta();
+        this.dice.forEach(({ group }) => {
+          if (group !== this.dragTarget) {
+            group.rotation.y += delta * .45;
+            group.rotation.x = Math.sin(performance.now() * .001 + group.position.x) * .08;
+          }
+        });
+        super.render();
+      }
+
+      onPointerDown(event) {
+        const hit = this.pick(event);
+        if (!hit) return;
+        state.selectedKey = hit.userData.key;
+        this.dragging = true;
+        this.dragTarget = hit;
+        this.lastX = event.clientX;
+        this.highlight(state.selectedKey);
+        renderChoiceList(getAvailableDice());
+        renderDiceNet(hit.userData.die);
+        elements.selectNextButton.disabled = state.mode === 2 ? !isCustomValid() : false;
+      }
+
+      onPointerMove(event) {
+        if (!this.dragging || !this.dragTarget) return;
+        const dx = event.clientX - this.lastX;
+        this.dragTarget.rotation.y += dx * .015;
+        this.lastX = event.clientX;
+      }
+
+      onPointerUp() {
+        this.dragging = false;
+        this.dragTarget = null;
+      }
+
+      pick(event) {
+        const rect = this.canvas.getBoundingClientRect();
+        this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        this.raycaster.setFromCamera(this.pointer, this.camera);
+        const hits = this.raycaster.intersectObjects(this.dice.map(item => item.group), true);
+        return hits.length ? findDieRoot(hits[0].object) : null;
+      }
+    }
+
+    class PlayScene extends BaseScene {
+      constructor(canvas) {
+        super(canvas);
+        this.camera.position.set(0, 3.4, 7.4);
+        this.camera.lookAt(0, .8, 0);
+        this.dice = [];
+        this.createTableAndCup();
+      }
+
+      createTableAndCup() {
+        const floor = new THREE.Mesh(
+          new THREE.BoxGeometry(8, .22, 5),
+          new THREE.MeshStandardMaterial({ color: 0x141d31, roughness: .78 })
+        );
+        floor.position.y = -.12;
+        floor.receiveShadow = true;
+        this.scene.add(floor);
+
+        const cupMaterial = new THREE.MeshStandardMaterial({ color: 0x3a2418, roughness: .55, metalness: .05, side: THREE.DoubleSide });
+        const cup = new THREE.Mesh(new THREE.CylinderGeometry(.82, .62, 1.45, 48, 1, true), cupMaterial);
+        cup.position.set(0, 3.25, -.25);
+        cup.rotation.x = .18;
+        cup.castShadow = true;
+        this.scene.add(cup);
+
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(.82, .035, 12, 48), cupMaterial);
+        rim.position.copy(cup.position).add(new THREE.Vector3(0, .72, 0));
+        rim.rotation.x = Math.PI / 2 + .18;
+        this.scene.add(rim);
+      }
+
+      setDice(player1Die, player2Die) {
+        this.dice.forEach(item => this.scene.remove(item.group));
+        this.dice = [
+          { die: player1Die, group: createDieMesh(player1Die, DIE_COLORS[player1Die.key] || DIE_COLORS.Eigen), x: -1.18 },
+          { die: player2Die, group: createDieMesh(player2Die, DIE_COLORS[player2Die.key] || DIE_COLORS.Eigen), x: 1.18 }
+        ];
+        this.dice.forEach(item => {
+          item.group.position.set(item.x, .62, 0);
+          this.scene.add(item.group);
+        });
+      }
+
+      roll(indices) {
+        return Promise.all(this.dice.map((item, dieIndex) => this.dropDie(item, indices[dieIndex], dieIndex)));
+      }
+
+      dropDie(item, faceIndex, dieIndex) {
+        const group = item.group;
+        const start = performance.now();
+        const duration = 2100;
+        const startX = dieIndex === 0 ? -.25 : .25;
+        const endX = item.x;
+        const endZ = dieIndex === 0 ? .25 : -.18;
+        const spinAxis = new THREE.Vector3(Math.random() + .2, Math.random() + .6, Math.random() + .1).normalize();
+        const startQ = new THREE.Quaternion().setFromAxisAngle(spinAxis, Math.PI * (6 + Math.random() * 2));
+        const targetQ = quaternionForTopFace(faceIndex, dieIndex);
+        group.position.set(startX, 3.55, -.25);
+        group.quaternion.copy(startQ);
+
+        return new Promise(resolve => {
+          this.animations.push(now => {
+            const t = Math.min(1, (now - start) / duration);
+            const fall = easeOutBounce(t);
+            const x = lerp(startX, endX, easeInOut(t));
+            const z = lerp(-.25, endZ, easeInOut(t));
+            const y = 3.55 - 2.93 * fall + Math.sin(t * Math.PI * 5) * (1 - t) * .18;
+            group.position.set(x, Math.max(.62, y), z);
+            group.rotation.x += .16 * (1 - t) + .02;
+            group.rotation.y += .22 * (1 - t) + .025;
+            group.rotation.z += .13 * (1 - t) + .015;
+            if (t > .68) group.quaternion.slerp(targetQ, (t - .68) / .32);
+            if (t >= 1) {
+              group.position.set(endX, .62, endZ);
+              group.quaternion.copy(targetQ);
+              resolve();
+              return true;
+            }
+            return false;
+          });
+        });
+      }
+    }
+
+    function createDieMesh(die, color) {
+      const root = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1, 8, 8, 8),
+        new THREE.MeshStandardMaterial({ color, roughness: .42, metalness: .03 })
+      );
+      body.castShadow = true;
+      body.receiveShadow = true;
+      root.add(body);
+
+      const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(1.012, 1.012, 1.012)),
+        new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .24 })
+      );
+      root.add(edges);
+
+      FACE_DEFINITIONS.forEach((face, index) => {
+        const faceGroup = new THREE.Group();
+        faceGroup.position.set(...face.position);
+        faceGroup.rotation.copy(face.rotation);
+        const positions = PIPS[die.values[index]] || makeFallbackPips(die.values[index]);
+        positions.forEach(([x, y]) => {
+          const pip = new THREE.Mesh(
+            new THREE.CircleGeometry(.058, 24),
+            new THREE.MeshStandardMaterial({ color: 0x10131f, roughness: .3 })
+          );
+          pip.position.set(x, y, .012);
+          faceGroup.add(pip);
+        });
+        root.add(faceGroup);
+      });
+      return root;
+    }
+
+    function findDieRoot(object) {
+      let current = object;
+      while (current.parent && !current.userData.key) current = current.parent;
+      return current.userData.key ? current : null;
+    }
+
+    function makeFallbackPips(value) {
+      return Array.from({ length: Math.max(0, Math.min(12, value || 0)) }, (_, index) => [((index % 4) - 1.5) * .14, (Math.floor(index / 4) - 1) * .16]);
+    }
+
+    function quaternionForTopFace(faceIndex, dieIndex) {
+      const face = FACE_DEFINITIONS[faceIndex];
+      const align = new THREE.Quaternion().setFromUnitVectors(face.normal, new THREE.Vector3(0, 1, 0));
+      const spin = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), (dieIndex ? 1 : -1) * Math.PI / 14);
+      return spin.multiply(align);
+    }
+
+    let selectionScene;
+    let playScene;
+
+    function init() {
+      selectionScene = new SelectionScene($('#selectionCanvas'));
+      playScene = new PlayScene($('#playCanvas'));
       renderCustomInputs();
-      sceneManager = new DiceScene(document.querySelector('#sceneContainer'));
       bindEvents();
-      updateUI();
+      showPage('mode');
     }
 
     function bindEvents() {
-      elements.mode1Button.addEventListener('click', () => startMode(1));
-      elements.mode2Button.addEventListener('click', () => startMode(2));
-      elements.confirmSelectionButton.addEventListener('click', confirmSelection);
-      elements.newGameButton.addEventListener('click', resetGame);
+      $('#mode1Button').addEventListener('click', () => startMode(1));
+      $('#mode2Button').addEventListener('click', () => startMode(2));
+      $('#backToModeButton').addEventListener('click', resetToMode);
+      elements.selectNextButton.addEventListener('click', confirmSelection);
       elements.rollButton.addEventListener('click', playRound);
-      elements.masterButton.addEventListener('click', runMasterSimulation);
-      elements.toggleProbabilityButton.addEventListener('click', toggleProbabilities);
+      $('#masterButton').addEventListener('click', runMasterSimulation);
+      $('#restartButton').addEventListener('click', resetToMode);
     }
 
-    function renderStandardDiceButtons() {
-      elements.standardDiceGrid.innerHTML = '';
-      Object.entries(STANDARD_DICE).forEach(([key, values]) => {
-        const button = document.createElement('button');
-        button.className = 'die-card';
-        button.type = 'button';
-        button.dataset.key = key;
-        button.innerHTML = `<span class="die-title">Würfel ${key}<span>${values.reduce((a, b) => a + b, 0)} Punkte</span></span><span class="die-values">Seiten: ${values.join(', ')}</span>`;
-        button.addEventListener('click', () => selectStandardDie(key));
-        elements.standardDiceGrid.appendChild(button);
+    function startMode(mode) {
+      state.mode = mode;
+      state.selectionStep = 'player1';
+      state.selectedKey = null;
+      state.player1Die = null;
+      state.player2Die = null;
+      resetScores();
+      showPage('select');
+      updateSelectionUI();
+    }
+
+    function showPage(page) {
+      state.page = page;
+      elements.pages.forEach(section => section.classList.toggle('active', section.id === `${page}Page`));
+      elements.stepDots.forEach(dot => dot.classList.toggle('active', dot.dataset.step === page));
+      requestAnimationFrame(() => {
+        selectionScene?.resize();
+        playScene?.resize();
       });
+    }
+
+    function updateSelectionUI() {
+      const available = getAvailableDice();
+      selectionScene.setDice(available);
+      selectionScene.highlight(state.selectedKey);
+      renderChoiceList(available);
+      renderDiceNet(getSelectedDie() || available[0]);
+
+      const customMode = state.mode === 2;
+      elements.customPanel.classList.toggle('hidden', !customMode);
+      elements.selectNextButton.disabled = !state.selectedKey || (customMode && !isCustomValid());
+      elements.selectNextButton.textContent = state.mode === 1 && state.selectionStep === 'player1' ? 'Spieler 2 wählt' : 'Zum Spiel';
+      elements.selectionTitle.textContent = state.selectionStep === 'player1' ? 'Würfel wählen' : 'Gegenwürfel wählen';
+      elements.selectionHint.textContent = state.mode === 2 ? 'Standardwürfel wählen. Eigenen Würfel unten einstellen.' : 'Würfel anklicken oder drehen.';
+      updateCustomSum();
+    }
+
+    function getAvailableDice() {
+      return Object.entries(STANDARD_DICE)
+        .filter(([key]) => !(state.mode === 1 && state.selectionStep === 'player2' && state.player1Die?.key === key))
+        .map(([key, values]) => ({ key, label: key, values }));
+    }
+
+    function renderChoiceList(dice) {
+      elements.choiceList.innerHTML = '';
+      dice.forEach(die => {
+        const button = document.createElement('button');
+        button.className = `choice-btn ${state.selectedKey === die.key ? 'active' : ''}`;
+        button.type = 'button';
+        button.innerHTML = `<span><span class="swatch" style="background:#${(DIE_COLORS[die.key] || DIE_COLORS.Eigen).toString(16).padStart(6, '0')}"></span> Würfel ${die.label}</span><strong>${die.values.join(' · ')}</strong>`;
+        button.addEventListener('click', () => {
+          state.selectedKey = die.key;
+          selectionScene.highlight(die.key);
+          renderChoiceList(dice);
+          renderDiceNet(die);
+          elements.selectNextButton.disabled = state.mode === 2 ? !isCustomValid() : false;
+        });
+        elements.choiceList.appendChild(button);
+      });
+    }
+
+    function renderDiceNet(die) {
+      elements.diceNet.innerHTML = '';
+      die.values.forEach(value => {
+        const face = document.createElement('div');
+        face.className = 'net-face';
+        netPipPositions(value).forEach(position => {
+          const pip = document.createElement('span');
+          pip.className = 'net-pip';
+          if (position) pip.dataset.pos = position;
+          face.appendChild(pip);
+        });
+        elements.diceNet.appendChild(face);
+      });
+    }
+
+    function netPipPositions(value) {
+      return {
+        0: [],
+        1: [''],
+        2: ['tl', 'br'],
+        3: ['tl', '', 'br'],
+        4: ['tl', 'tr', 'bl', 'br'],
+        5: ['tl', 'tr', '', 'bl', 'br'],
+        6: ['tl', 'tr', 'ml', 'mr', 'bl', 'br']
+      }[value] || [];
     }
 
     function renderCustomInputs() {
       elements.customInputs.innerHTML = '';
       state.customValues.forEach((value, index) => {
-        const label = document.createElement('label');
-        label.className = 'face-input';
-        label.innerHTML = `Seite ${index + 1}<input type="number" min="0" step="1" value="${value}" aria-label="Eigener Würfel Seite ${index + 1}">`;
-        label.querySelector('input').addEventListener('input', event => {
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.step = '1';
+        input.value = value;
+        input.setAttribute('aria-label', `Eigener Würfel Seite ${index + 1}`);
+        input.addEventListener('input', event => {
           state.customValues[index] = Number(event.target.value);
-          updateUI();
+          updateSelectionUI();
         });
-        elements.customInputs.appendChild(label);
+        elements.customInputs.appendChild(input);
       });
+      updateCustomSum();
     }
 
-    function startMode(mode) {
-      resetRoundState();
-      state.mode = mode;
-      state.selectionStep = 'player1';
-      state.player1Die = null;
-      state.player2Die = null;
-      state.selectedStandardKey = null;
-      state.gameActive = false;
-      state.gameFinished = false;
-      sceneManager.createDicePair({ label: 'A', values: STANDARD_DICE.A }, { label: mode === 1 ? 'B' : 'Eigener Würfel', values: mode === 1 ? STANDARD_DICE.B : state.customValues });
-      updateUI();
+    function updateCustomSum() {
+      const sum = state.customValues.reduce((total, value) => total + (Number.isFinite(value) ? value : 0), 0);
+      elements.customSum.textContent = `${sum} / 18`;
+      elements.customSum.classList.toggle('ok', isCustomValid());
     }
 
-    function selectStandardDie(key) {
-      if (!state.mode || state.gameActive || state.gameFinished) return;
-      if (state.mode === 1 && state.selectionStep === 'player2' && state.player1Die?.label === key) return;
-      state.selectedStandardKey = key;
-      updateUI();
+    function isCustomValid() {
+      return state.customValues.every(value => Number.isInteger(value) && value >= 0) && state.customValues.reduce((sum, value) => sum + value, 0) === 18;
+    }
+
+    function getSelectedDie() {
+      const values = STANDARD_DICE[state.selectedKey];
+      return values ? { key: state.selectedKey, label: state.selectedKey, values } : null;
     }
 
     function confirmSelection() {
-      if (!state.selectedStandardKey && state.selectionStep !== 'customReady') return;
-
-      if (state.mode === 1) {
-        if (state.selectionStep === 'player1') {
-          state.player1Die = createDieData(state.selectedStandardKey, STANDARD_DICE[state.selectedStandardKey]);
-          state.selectedStandardKey = null;
-          state.selectionStep = 'player2';
-        } else if (state.selectionStep === 'player2') {
-          state.player2Die = createDieData(state.selectedStandardKey, STANDARD_DICE[state.selectedStandardKey]);
-          beginGame();
-        }
+      const selected = getSelectedDie();
+      if (!selected) return;
+      if (state.mode === 1 && state.selectionStep === 'player1') {
+        state.player1Die = selected;
+        state.selectedKey = null;
+        state.selectionStep = 'player2';
+        updateSelectionUI();
+        return;
       }
 
-      if (state.mode === 2 && state.selectionStep === 'player1') {
-        state.player1Die = createDieData(state.selectedStandardKey, STANDARD_DICE[state.selectedStandardKey]);
-        state.player2Die = createDieData('Eigener Würfel', state.customValues);
-        if (isCustomDieValid()) beginGame();
-      }
-      updateUI();
+      state.player1Die ??= selected;
+      state.player2Die = state.mode === 2
+        ? { key: 'Eigen', label: 'Eigen', values: [...state.customValues] }
+        : selected;
+      startGame();
     }
 
-    function createDieData(label, values) {
-      return { label, values: values.map(Number) };
+    function startGame() {
+      resetScores();
+      playScene.setDice(state.player1Die, state.player2Die);
+      showPage('play');
+      updateTally('Bereit.');
     }
 
-    function beginGame() {
-      resetRoundState();
-      state.selectionStep = 'ready';
-      state.gameActive = true;
-      state.gameFinished = false;
-      sceneManager.createDicePair(state.player1Die, state.player2Die);
-      updateProbabilities();
-    }
-
-    function resetRoundState() {
-      state.round = 0;
-      state.wins1 = 0;
-      state.wins2 = 0;
-      state.draws = 0;
-      state.lastRoll = null;
-      state.lastWinner = 'Noch nicht gespielt';
-      elements.roundLog.innerHTML = '<div class="hint">Noch keine Würfe.</div>';
-      elements.masterResults.innerHTML = '';
-      elements.masterInterpretation.textContent = '';
-      elements.masterPanel.classList.add('hidden');
-    }
-
-    function resetGame() {
-      state.mode = null;
-      state.selectionStep = 'mode';
-      state.player1Die = null;
-      state.player2Die = null;
-      state.selectedStandardKey = null;
-      state.gameActive = false;
-      state.gameFinished = false;
-      state.isRolling = false;
-      resetRoundState();
-      sceneManager.createDicePair({ label: 'A', values: STANDARD_DICE.A }, { label: 'B', values: STANDARD_DICE.B });
-      updateUI();
-    }
-
-    // Eine animierte Runde: erst Zufallsergebnis bestimmen, dann passend animieren, dann Statistik aktualisieren.
     async function playRound() {
-      if (!state.gameActive || state.isRolling || state.round >= state.maxRounds) return;
-      state.isRolling = true;
-      updateUI();
+      if (state.rolling || state.round >= state.maxRounds) return;
+      state.rolling = true;
+      elements.rollButton.disabled = true;
+      elements.lastRoll.textContent = 'Der Becher kippt ...';
 
       const roll1 = rollDie(state.player1Die);
       const roll2 = rollDie(state.player2Die);
-      await sceneManager.roll([roll1.index, roll2.index]);
+      await playScene.roll([roll1.index, roll2.index]);
 
       state.round += 1;
-      const winner = determineWinner(roll1.value, roll2.value);
-      state.lastRoll = { player1: roll1.value, player2: roll2.value };
-      state.lastWinner = winner.label;
-      if (winner.code === 1) state.wins1 += 1;
-      if (winner.code === 2) state.wins2 += 1;
-      if (winner.code === 0) state.draws += 1;
-      addLogEntry(state.round, roll1.value, roll2.value, winner.label);
+      let message = `${roll1.value} : ${roll2.value}`;
+      if (roll1.value > roll2.value) { state.wins1 += 1; message += ' · Spieler 1'; }
+      else if (roll2.value > roll1.value) { state.wins2 += 1; message += ' · Spieler 2'; }
+      else { state.draws += 1; message += ' · Gleichstand'; }
+      updateTally(message);
 
-      if (state.round >= state.maxRounds) finishGame();
-      state.isRolling = false;
-      updateUI();
+      state.rolling = false;
+      elements.rollButton.disabled = false;
+      if (state.round === state.maxRounds) showResult();
     }
 
     function rollDie(die) {
@@ -913,174 +902,97 @@
       return { index, value: die.values[index] };
     }
 
-    function determineWinner(value1, value2) {
-      if (value1 > value2) return { code: 1, label: 'Spieler 1 gewinnt die Runde' };
-      if (value2 > value1) return { code: 2, label: 'Spieler 2 gewinnt die Runde' };
-      return { code: 0, label: 'Unentschieden' };
+    function updateTally(message) {
+      elements.roundChip.textContent = `${state.round} / ${state.maxRounds}`;
+      elements.score1.textContent = state.wins1;
+      elements.score2.textContent = state.wins2;
+      elements.scoreDraw.textContent = state.draws;
+      elements.marks1.textContent = tallyMarks(state.wins1);
+      elements.marks2.textContent = tallyMarks(state.wins2);
+      elements.marksDraw.textContent = tallyMarks(state.draws);
+      elements.lastRoll.textContent = message;
     }
 
-    function addLogEntry(round, value1, value2, winner) {
-      if (round === 1) elements.roundLog.innerHTML = '';
-      const entry = document.createElement('div');
-      entry.className = 'log-entry';
-      entry.innerHTML = `<span>Runde ${round}: ${value1} : ${value2}</span><strong>${winner}</strong>`;
-      elements.roundLog.prepend(entry);
+    function tallyMarks(count) {
+      return '||||/'.repeat(Math.floor(count / 5)) + '|'.repeat(count % 5);
     }
 
-    function finishGame() {
-      state.gameActive = false;
-      state.gameFinished = true;
-      state.lastWinner = getOverallWinner();
-      elements.masterPanel.classList.remove('hidden');
+    function showResult() {
+      elements.rollButton.disabled = true;
+      const winner = state.wins1 > state.wins2 ? 'Spieler 1 gewinnt.' : state.wins2 > state.wins1 ? 'Spieler 2 gewinnt.' : 'Unentschieden.';
+      elements.resultTitle.textContent = winner;
+      elements.resultGrid.innerHTML = resultCards({ wins1: state.wins1, wins2: state.wins2, draws: state.draws }, state.maxRounds);
+      const exact = exactProbabilities(state.player1Die, state.player2Die);
+      elements.probabilityText.textContent = `Theorie: S1 ${(exact.wins1 / 36 * 100).toFixed(1)} %, S2 ${(exact.wins2 / 36 * 100).toFixed(1)} %, = ${(exact.draws / 36 * 100).toFixed(1)} %.`;
+      elements.masterGrid.classList.add('hidden');
+      elements.masterGrid.innerHTML = '';
+      elements.masterText.textContent = '';
+      showPage('result');
     }
 
-    function getOverallWinner() {
-      if (state.wins1 > state.wins2) return `Gesamtsieger: Spieler 1 mit Würfel ${state.player1Die.label}`;
-      if (state.wins2 > state.wins1) return `Gesamtsieger: Spieler 2 mit Würfel ${state.player2Die.label}`;
-      return 'Gesamtergebnis: Unentschieden';
-    }
-
-    // 100 schnelle Würfe ohne Einzelanimation für den Simulationsvergleich nach dem Spiel.
     function runMasterSimulation() {
-      if (!state.player1Die || !state.player2Die) return;
-      const result = simulateManyRolls(state.player1Die, state.player2Die, 100);
-      const total = result.wins1 + result.wins2 + result.draws;
-      elements.masterResults.innerHTML = [
-        createResultCard('Siege Spieler 1', result.wins1, total),
-        createResultCard('Siege Spieler 2', result.wins2, total),
-        createResultCard('Unentschieden', result.draws, total)
-      ].join('');
-      elements.masterInterpretation.textContent = interpretSimulation(result);
-    }
-
-    function simulateManyRolls(die1, die2, count) {
       const result = { wins1: 0, wins2: 0, draws: 0 };
-      for (let i = 0; i < count; i += 1) {
-        const value1 = rollDie(die1).value;
-        const value2 = rollDie(die2).value;
-        if (value1 > value2) result.wins1 += 1;
-        else if (value2 > value1) result.wins2 += 1;
+      for (let i = 0; i < 100; i += 1) {
+        const a = rollDie(state.player1Die).value;
+        const b = rollDie(state.player2Die).value;
+        if (a > b) result.wins1 += 1;
+        else if (b > a) result.wins2 += 1;
         else result.draws += 1;
       }
+      elements.masterGrid.innerHTML = resultCards(result, 100);
+      elements.masterGrid.classList.remove('hidden');
+      elements.masterText.textContent = result.wins1 > result.wins2 ? `${state.player1Die.label} war stärker.` : result.wins2 > result.wins1 ? `${state.player2Die.label} war stärker.` : 'Beide waren gleichauf.';
+    }
+
+    function exactProbabilities(die1, die2) {
+      const result = { wins1: 0, wins2: 0, draws: 0 };
+      die1.values.forEach(a => die2.values.forEach(b => {
+        if (a > b) result.wins1 += 1;
+        else if (b > a) result.wins2 += 1;
+        else result.draws += 1;
+      }));
       return result;
     }
 
-    function interpretSimulation(result) {
-      if (result.wins1 > result.wins2) return `Interpretation: Würfel ${state.player1Die.label} war in dieser Simulation überlegen.`;
-      if (result.wins2 > result.wins1) return `Interpretation: Würfel ${state.player2Die.label} war in dieser Simulation überlegen.`;
-      return 'Interpretation: Beide Würfel waren in dieser Simulation gleich stark.';
+    function resultCards(result, total) {
+      return [
+        ['Spieler 1', result.wins1],
+        ['Spieler 2', result.wins2],
+        ['=', result.draws]
+      ].map(([label, value]) => `<div class="result-card"><span>${label}</span><b>${value}</b><p>${(value / total * 100).toFixed(1)} %</p></div>`).join('');
     }
 
-    // Didaktische Berechnung: vollständiges Durchgehen aller 6 × 6 = 36 Paarwürfe, keine Simulation.
-    function calculateExactProbabilities(die1, die2) {
-      const counts = { wins1: 0, wins2: 0, draws: 0 };
-      die1.values.forEach(value1 => {
-        die2.values.forEach(value2 => {
-          if (value1 > value2) counts.wins1 += 1;
-          else if (value2 > value1) counts.wins2 += 1;
-          else counts.draws += 1;
-        });
-      });
-      return counts;
+    function resetScores() {
+      state.round = 0;
+      state.wins1 = 0;
+      state.wins2 = 0;
+      state.draws = 0;
+      state.rolling = false;
+      elements.rollButton.disabled = false;
     }
 
-    function toggleProbabilities() {
-      state.probabilitiesVisible = !state.probabilitiesVisible;
-      updateUI();
+    function resetToMode() {
+      state.mode = 0;
+      state.selectedKey = null;
+      state.player1Die = null;
+      state.player2Die = null;
+      state.selectionStep = 'player1';
+      resetScores();
+      showPage('mode');
     }
 
-    function updateProbabilities() {
-      if (!state.player1Die || !state.player2Die) {
-        elements.probabilityGrid.innerHTML = '<p class="hint">Wähle zuerst zwei Würfel aus.</p>';
-        return;
-      }
-      const probabilities = calculateExactProbabilities(state.player1Die, state.player2Die);
-      elements.probabilityGrid.innerHTML = [
-        createResultCard('P(S1 gewinnt)', probabilities.wins1, 36),
-        createResultCard('P(S2 gewinnt)', probabilities.wins2, 36),
-        createResultCard('P(Unentschieden)', probabilities.draws, 36)
-      ].join('');
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function easeInOut(t) { return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+    function easeOutBounce(t) {
+      const n1 = 7.5625;
+      const d1 = 2.75;
+      if (t < 1 / d1) return n1 * t * t;
+      if (t < 2 / d1) return n1 * (t -= 1.5 / d1) * t + .75;
+      if (t < 2.5 / d1) return n1 * (t -= 2.25 / d1) * t + .9375;
+      return n1 * (t -= 2.625 / d1) * t + .984375;
     }
 
-    function createResultCard(label, count, total) {
-      const percent = total === 0 ? 0 : (count / total) * 100;
-      return `<div class="stat"><div class="label">${label}</div><div class="value">${count} <small>(${percent.toFixed(1)}%)</small></div><div class="meter"><span style="width:${percent}%"></span></div></div>`;
-    }
-
-    // Modus 2 ist nur startbar, wenn sechs ganze, nichtnegative Werte exakt 18 Punkte ergeben.
-    function isCustomDieValid() {
-      return state.customValues.every(value => Number.isInteger(value) && value >= 0) && state.customValues.reduce((a, b) => a + b, 0) === 18;
-    }
-
-    function updateUI() {
-      elements.mode1Button.classList.toggle('active', state.mode === 1);
-      elements.mode2Button.classList.toggle('active', state.mode === 2);
-      elements.customDiePanel.classList.toggle('hidden', state.mode !== 2 || state.selectionStep === 'mode');
-      elements.probabilityPanel.classList.toggle('hidden', !state.probabilitiesVisible);
-      elements.toggleProbabilityButton.textContent = state.probabilitiesVisible ? 'Wahrscheinlichkeiten ausblenden' : 'Wahrscheinlichkeiten anzeigen';
-
-      const customSum = state.customValues.reduce((a, b) => a + (Number.isFinite(b) ? b : 0), 0);
-      const customValid = isCustomDieValid();
-      elements.customValidation.textContent = `Summe: ${customSum} / 18 · ${customValid ? 'gültiger Würfel' : 'nur ganze Zahlen ≥ 0 erlaubt'}`;
-      elements.customValidation.className = `validation ${customValid ? 'valid' : 'invalid'}`;
-
-      updateSelectionInstruction(customValid);
-      updateDieButtons();
-      updateActionButtons(customValid);
-      updateStatusGrid();
-      updateProbabilities();
-    }
-
-    function updateSelectionInstruction(customValid) {
-      if (!state.mode) {
-        elements.selectionInstruction.textContent = 'Wähle zuerst einen Modus.';
-      } else if (state.mode === 1 && state.selectionStep === 'player1') {
-        elements.selectionInstruction.textContent = 'Spieler 1 wählt zuerst einen Standardwürfel.';
-      } else if (state.mode === 1 && state.selectionStep === 'player2') {
-        elements.selectionInstruction.textContent = `Spieler 2 wählt einen verbleibenden Würfel. Würfel ${state.player1Die.label} ist bereits vergeben.`;
-      } else if (state.mode === 2 && state.selectionStep === 'player1') {
-        elements.selectionInstruction.textContent = customValid ? 'Wähle den Standardwürfel für Spieler 1 und starte anschließend.' : 'Gestalte einen gültigen eigenen Würfel und wähle den Standardwürfel für Spieler 1.';
-      } else {
-        elements.selectionInstruction.textContent = 'Die Würfel sind gewählt. Viel Erfolg!';
-      }
-    }
-
-    function updateDieButtons() {
-      elements.standardDiceGrid.querySelectorAll('.die-card').forEach(button => {
-        const key = button.dataset.key;
-        const unavailable = state.mode === 1 && state.selectionStep === 'player2' && state.player1Die?.label === key;
-        button.disabled = !state.mode || state.gameActive || state.gameFinished || unavailable;
-        button.classList.toggle('active', state.selectedStandardKey === key || state.player1Die?.label === key || state.player2Die?.label === key);
-      });
-    }
-
-    function updateActionButtons(customValid) {
-      const canConfirmMode1 = state.mode === 1 && Boolean(state.selectedStandardKey) && ['player1', 'player2'].includes(state.selectionStep);
-      const canConfirmMode2 = state.mode === 2 && state.selectionStep === 'player1' && Boolean(state.selectedStandardKey) && customValid;
-      elements.confirmSelectionButton.disabled = !(canConfirmMode1 || canConfirmMode2) || state.isRolling;
-      elements.confirmSelectionButton.textContent = state.mode === 2 ? 'Würfel wählen' : (state.selectionStep === 'player2' ? 'Würfel wählen' : 'Würfel wählen');
-      elements.rollButton.disabled = !state.gameActive || state.isRolling || state.round >= state.maxRounds;
-      elements.rollButton.textContent = state.isRolling ? 'Würfel rollen ...' : 'Runde werfen';
-      elements.roundPill.textContent = `Runde ${state.round} / ${state.maxRounds}`;
-      elements.gameHint.textContent = state.gameFinished ? getOverallWinner() : state.gameActive ? `Aktiv: ${state.player1Die.label} gegen ${state.player2Die.label}` : 'Nach der Würfelwahl startet das Duell über 11 Runden.';
-    }
-
-    function updateStatusGrid() {
-      const lastRollText = state.lastRoll ? `${state.lastRoll.player1} : ${state.lastRoll.player2}` : '—';
-      const cards = [
-        ['Aktuelle Runde', `${state.round} / ${state.maxRounds}`],
-        ['Würfel Spieler 1', state.player1Die ? `${state.player1Die.label} (${state.player1Die.values.join(', ')})` : '—'],
-        ['Würfel Spieler 2', state.player2Die ? `${state.player2Die.label} (${state.player2Die.values.join(', ')})` : '—'],
-        ['Letzter Wurf', lastRollText],
-        ['Rundensieger / Ergebnis', state.lastWinner],
-        ['Siege Spieler 1', state.wins1],
-        ['Siege Spieler 2', state.wins2],
-        ['Unentschieden', state.draws]
-      ];
-      elements.statusGrid.innerHTML = cards.map(([label, value]) => `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div></div>`).join('');
-    }
-
-    initializeApp();
+    init();
   </script>
 </body>
 </html>
