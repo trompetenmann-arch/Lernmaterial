@@ -1,0 +1,2753 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RH-Wissen</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7f2;
+      --card: #ffffff;
+      --ink: #1d2b24;
+      --muted: #5f6f66;
+      --brand: #2f6f4e;
+      --brand-dark: #23543b;
+      --accent: #f0b429;
+      --good: #247a43;
+      --bad: #b93a32;
+      --ring: rgba(47, 111, 78, 0.24);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(240, 180, 41, 0.18), transparent 34rem),
+        linear-gradient(135deg, #edf5ee 0%, var(--bg) 50%, #e8f0ec 100%);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+
+    .app {
+      width: min(940px, 100%);
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(47, 111, 78, 0.14);
+      border-radius: 28px;
+      box-shadow: 0 24px 60px rgba(21, 47, 35, 0.14);
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--brand), #4d8f67);
+      color: white;
+      padding: clamp(1.4rem, 4vw, 2.4rem);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(150px, 230px);
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.2rem, 8vw, 4.7rem);
+      line-height: 0.95;
+      letter-spacing: -0.07em;
+    }
+
+    .subtitle { margin: 0; max-width: 68ch; color: rgba(255,255,255,0.88); font-size: 1.05rem; }
+
+    .hero-dog {
+      width: 100%;
+      max-width: 230px;
+      justify-self: end;
+      filter: drop-shadow(0 18px 24px rgba(12, 35, 23, 0.22));
+    }
+
+    main { padding: clamp(1rem, 4vw, 2rem); display: grid; gap: 1rem; }
+
+    .dog-gallery {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .dog-picture {
+      background: linear-gradient(180deg, #fffaf0, #f7fbf6);
+      border: 1px solid #dfe9e2;
+      border-radius: 20px;
+      padding: 0.75rem;
+      overflow: hidden;
+      min-height: 170px;
+      display: grid;
+      align-content: space-between;
+      box-shadow: 0 10px 24px rgba(29, 43, 36, 0.07);
+    }
+
+    .dog-picture svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .dog-picture figcaption {
+      margin-top: 0.35rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .stat {
+      background: #f8faf7;
+      border: 1px solid #dfe9e2;
+      border-radius: 18px;
+      padding: 0.9rem;
+    }
+
+    .stat b { display: block; font-size: 1.25rem; }
+    .stat span { color: var(--muted); font-size: 0.88rem; }
+
+    .progress-shell { height: 12px; background: #dfe8df; border-radius: 99px; overflow: hidden; }
+    .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--brand)); transition: width .25s ease; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid #e1e9e3;
+      border-radius: 24px;
+      padding: clamp(1.1rem, 4vw, 1.6rem);
+      box-shadow: 0 12px 28px rgba(29, 43, 36, 0.08);
+    }
+
+    .question-meta { color: var(--brand); font-weight: 800; letter-spacing: .02em; text-transform: uppercase; font-size: .82rem; }
+    .question { margin: .5rem 0 1rem; font-size: clamp(1.25rem, 4vw, 1.75rem); line-height: 1.28; }
+    .answers { display: grid; gap: .75rem; }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      padding: .9rem 1rem;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    button:focus-visible { outline: 4px solid var(--ring); outline-offset: 2px; }
+    button:not(:disabled):hover { transform: translateY(-1px); }
+
+    .answer {
+      width: 100%;
+      text-align: left;
+      background: #f5f8f4;
+      border: 1px solid #dbe6de;
+      color: var(--ink);
+    }
+
+    .answer.correct { background: #e1f4e7; border-color: var(--good); color: var(--good); }
+    .answer.wrong { background: #fae5e3; border-color: var(--bad); color: var(--bad); }
+    .answer:disabled { cursor: default; opacity: 1; }
+
+    .feedback { display: none; margin-top: 1rem; padding: 1rem; border-radius: 18px; border: 1px solid transparent; }
+    .feedback.show { display: block; }
+    .feedback.good { background: #e9f7ee; border-color: #b9dfc4; color: #185f33; }
+    .feedback.bad { background: #fff4e2; border-color: #f2cf8c; color: #67460d; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: space-between; align-items: center; }
+    .primary { background: var(--brand); color: white; box-shadow: 0 10px 20px rgba(47, 111, 78, .22); }
+    .primary:hover { background: var(--brand-dark); }
+    .secondary { background: #eef4ef; color: var(--brand-dark); border: 1px solid #d6e4da; }
+    .done { text-align: center; display: none; }
+    .done.show { display: block; }
+
+    @media (max-width: 720px) {
+      body { padding: .5rem; place-items: start center; }
+      .app { border-radius: 20px; }
+      header { grid-template-columns: 1fr; }
+      .hero-dog { max-width: 180px; justify-self: center; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dog-gallery { grid-template-columns: 1fr; }
+      .actions { display: grid; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>RH-Wissen</h1>
+        <p class="subtitle">Quiz- und Lerntraining für Wissen rund um Rettungshundestaffeln: Suchtaktik, Hundeführung, Kommunikation, Einsatzarten, Ausrüstung und Sicherheit.</p>
+      </div>
+      <svg class="hero-dog" viewBox="0 0 260 210" role="img" aria-labelledby="heroDogTitle">
+        <title id="heroDogTitle">Illustration eines Rettungshundes mit Geschirr</title>
+        <path d="M28 170c17-35 50-55 94-60 40-4 80 9 108 39" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="18" stroke-linecap="round"/>
+        <ellipse cx="129" cy="160" rx="80" ry="18" fill="rgba(22,54,36,.18)"/>
+        <path d="M63 93c10-37 39-55 78-48 32 6 54 30 63 64l5 46c2 15-20 20-25 6l-14-39H92l-13 40c-5 14-27 9-25-6l9-63Z" fill="#f6d8a8"/>
+        <path d="M89 84c12-28 36-41 70-31 24 8 38 30 45 56l-2 13H76l-2-10c2-10 7-20 15-28Z" fill="#855b35"/>
+        <path d="M83 92c-16-10-26-25-24-43 18 2 34 12 43 31" fill="#6d472b"/>
+        <path d="M178 82c11-18 27-28 46-30 0 21-11 35-30 45" fill="#6d472b"/>
+        <circle cx="113" cy="84" r="6" fill="#18241d"/>
+        <circle cx="162" cy="84" r="6" fill="#18241d"/>
+        <path d="M132 98c8 6 16 6 24 0" fill="none" stroke="#18241d" stroke-width="5" stroke-linecap="round"/>
+        <path d="M99 119h82l8 34H91l8-34Z" fill="#e44d3a"/>
+        <path d="M116 122h48v27h-48z" fill="#fff6d6" opacity=".9"/>
+        <path d="M132 129h16v14h-16zM133 128h14v16" stroke="#2f6f4e" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    </header>
+
+    <main>
+      <section class="stats" aria-label="Fortschritt">
+        <div class="stat"><b id="score">0 / 0</b><span>richtig / beantwortet</span></div>
+        <div class="stat"><b id="percent">0%</b><span>Trefferquote</span></div>
+        <div class="stat"><b id="remaining">194</b><span>noch offen</span></div>
+        <div class="stat"><b id="repeatCount">0</b><span>zu wiederholen</span></div>
+      </section>
+      <div class="progress-shell" aria-hidden="true"><div id="progressBar" class="progress-bar"></div></div>
+
+      <section class="dog-gallery" aria-label="Rettungshunde-Illustrationen">
+        <figure class="dog-picture">
+          <svg viewBox="0 0 260 150" role="img" aria-labelledby="areaDogTitle">
+            <title id="areaDogTitle">Rettungshund bei der Flächensuche im Wald</title>
+            <rect width="260" height="150" rx="18" fill="#e9f5ea"/>
+            <path d="M0 118c45-20 93-20 144-4 42 13 78 12 116-6v42H0Z" fill="#94bf7b"/>
+            <path d="M31 32 9 108h44L40 32Zm41-10-28 88h58L83 22Zm155 4-30 92h60L238 26Z" fill="#3d7a50"/>
+            <path d="M94 88c5-20 22-30 48-27 21 3 35 16 39 37l2 22c1 9-12 12-15 3l-8-20h-47l-8 20c-3 9-16 6-15-3l4-32Z" fill="#b97842"/>
+            <path d="M110 77c10-13 27-17 47-8 9 4 17 14 22 27H99c2-8 6-14 11-19Z" fill="#f0c98f"/>
+            <path d="M111 75 97 56c14 1 25 7 31 20" fill="#704525"/>
+            <path d="M165 75 184 59c0 15-7 25-21 31" fill="#704525"/>
+            <circle cx="128" cy="84" r="4" fill="#1d2b24"/><circle cx="155" cy="84" r="4" fill="#1d2b24"/>
+            <path d="M119 99h48l5 17h-58Z" fill="#e44d3a"/>
+          </svg>
+          <figcaption>Flächensuche im Gelände</figcaption>
+        </figure>
+
+        <figure class="dog-picture">
+          <svg viewBox="0 0 260 150" role="img" aria-labelledby="trailDogTitle">
+            <title id="trailDogTitle">Mantrailing-Hund mit langer Leine</title>
+            <rect width="260" height="150" rx="18" fill="#fff2d4"/>
+            <path d="M15 116c38-12 72-14 106-4 48 14 78 11 124-8" fill="none" stroke="#d2a95e" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 14"/>
+            <path d="M53 94c8-18 25-27 51-24 22 2 40 13 50 31l12 24c5 10-9 17-16 8l-16-20H82l-10 21c-5 10-20 5-17-6l-2-34Z" fill="#4f3322"/>
+            <path d="M76 82c8-19 29-26 53-19 14 4 25 14 34 30H66c2-5 5-8 10-11Z" fill="#8b623d"/>
+            <path d="M72 82 58 60c15 2 25 9 30 22m70 3 25-18c-2 15-11 24-27 27" fill="#2f2018"/>
+            <circle cx="101" cy="89" r="4" fill="#fff"/><circle cx="134" cy="88" r="4" fill="#fff"/>
+            <path d="M118 101c8 5 16 5 24 0" fill="none" stroke="#1d2b24" stroke-width="4" stroke-linecap="round"/>
+            <path d="M88 105h59l6 15H84Z" fill="#2f6f4e"/>
+            <path d="M147 113c39-10 66-7 91 9" fill="none" stroke="#e44d3a" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="232" cy="123" r="7" fill="#2f6f4e"/>
+          </svg>
+          <figcaption>Mantrailing mit langer Leine</figcaption>
+        </figure>
+
+        <figure class="dog-picture">
+          <svg viewBox="0 0 260 150" role="img" aria-labelledby="careDogTitle">
+            <title id="careDogTitle">Rettungshund in einer Trainingspause mit Wasser</title>
+            <rect width="260" height="150" rx="18" fill="#eaf5ff"/>
+            <circle cx="212" cy="32" r="19" fill="#f0b429"/>
+            <path d="M0 112h260v38H0Z" fill="#8fc18f"/>
+            <path d="M64 93c7-19 27-28 60-25 27 2 43 16 50 40l5 20c3 11-12 16-17 6l-10-21H93l-11 21c-5 10-20 5-17-6l-1-35Z" fill="#f1d6a6"/>
+            <path d="M86 80c13-17 34-22 60-13 15 5 25 16 30 33H76c2-8 5-14 10-20Z" fill="#ffffff"/>
+            <path d="M86 78 72 54c17 4 29 12 36 27m60 0 21-20c1 17-8 29-24 36" fill="#d59b5a"/>
+            <circle cx="112" cy="87" r="4" fill="#1d2b24"/><circle cx="146" cy="87" r="4" fill="#1d2b24"/>
+            <path d="M124 100c9 7 18 7 27 0" fill="none" stroke="#1d2b24" stroke-width="4" stroke-linecap="round"/>
+            <path d="M90 109h69l7 16H84Z" fill="#e44d3a"/>
+            <path d="M178 105h39l-6 27h-27Z" fill="#75aadb"/>
+            <path d="M184 112h27" stroke="#d8efff" stroke-width="5" stroke-linecap="round"/>
+          </svg>
+          <figcaption>Pause, Wasser und Fürsorge</figcaption>
+        </figure>
+      </section>
+
+      <section id="quizCard" class="card" aria-live="polite">
+        <div class="question-meta" id="questionMeta">Bereit?</div>
+        <h2 class="question" id="questionText">Starte dein Training.</h2>
+        <div class="answers" id="answers"></div>
+        <div class="feedback" id="feedback"></div>
+      </section>
+
+      <section id="done" class="card done">
+        <h2>Training abgeschlossen 🎉</h2>
+        <p>Alle 194 Fragen wurden mindestens einmal korrekt beantwortet. Starte neu, um die Reihenfolge erneut zu mischen.</p>
+      </section>
+
+      <div class="actions">
+        <button class="secondary" id="restartBtn" type="button">Training neu starten</button>
+        <button class="primary" id="nextBtn" type="button">Nächste Frage</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // PLATZHALTER – später durch echte Fragen ersetzen
+    const fragen = [
+      {
+            "id": 1,
+            "frage": "Suchtaktik: Welche Maßnahme gehört zu einer strukturierten Suchtaktik in der Flächensuche?",
+            "antworten": [
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen",
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 2,
+            "frage": "Hundeführung: Was ist bei der Hundeführung vor dem Suchbeginn besonders wichtig?",
+            "antworten": [
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten",
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 3,
+            "frage": "Erste Hilfe Hund: Welche Erste-Hilfe-Maßnahme ist bei einer stark blutenden Pfotenverletzung sinnvoll?",
+            "antworten": [
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen",
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 4,
+            "frage": "Funk: Was ist bei Funkkommunikation im Einsatz wichtig?",
+            "antworten": [
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen",
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 5,
+            "frage": "Flächensuche: Was beschreibt die Flächensuche am besten?",
+            "antworten": [
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt",
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 6,
+            "frage": "Trümmersuche: Welche Gefahr ist in der Trümmersuche besonders zu beachten?",
+            "antworten": [
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen",
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 7,
+            "frage": "Mantrailing: Was kennzeichnet Mantrailing?",
+            "antworten": [
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen",
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 8,
+            "frage": "Ausrüstung: Welche Ausrüstung gehört typischerweise in den Einsatzrucksack?",
+            "antworten": [
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel",
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 9,
+            "frage": "Rechtsgrundlagen: Warum sind Datenschutz und Persönlichkeitsrechte im Einsatz relevant?",
+            "antworten": [
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden",
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 10,
+            "frage": "Wetterkunde: Welche Wetterlage kann die Witterungsausbreitung stark beeinflussen?",
+            "antworten": [
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe",
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 11,
+            "frage": "Geländekunde: Was hilft bei der Orientierung im unübersichtlichen Gelände?",
+            "antworten": [
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung",
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 12,
+            "frage": "Einsatzsicherheit: Was hat bei jedem Einsatz Vorrang?",
+            "antworten": [
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund",
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 13,
+            "frage": "Anzeigeverhalten: Was bedeutet ein zuverlässiges Anzeigeverhalten?",
+            "antworten": [
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort",
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 14,
+            "frage": "Einsatztaktik: Warum werden Suchteams oft in Abschnitte eingeteilt?",
+            "antworten": [
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird",
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 15,
+            "frage": "Suchtaktik: Was sollte vor dem Betreten eines neuen Suchabschnitts geklärt sein?",
+            "antworten": [
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren",
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 16,
+            "frage": "Hundeführung: Wie sollte ein Hundeführer auf ein unsicheres Verhalten des Hundes reagieren?",
+            "antworten": [
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben",
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 17,
+            "frage": "Erste Hilfe Hund: Was ist bei Verdacht auf Überhitzung des Hundes zuerst sinnvoll?",
+            "antworten": [
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen",
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 18,
+            "frage": "Funk: Wie wird eine wichtige Funkmeldung am besten formuliert?",
+            "antworten": [
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln",
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 19,
+            "frage": "Flächensuche: Welche Umgebung ist typisch für eine Flächensuche?",
+            "antworten": [
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag",
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 20,
+            "frage": "Trümmersuche: Warum trägt der Hund in Trümmern oft besondere Schutzausrüstung?",
+            "antworten": [
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume",
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 21,
+            "frage": "Mantrailing: Warum wird beim Mantrailing ein Geruchsartikel genutzt?",
+            "antworten": [
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug",
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 22,
+            "frage": "Ausrüstung: Warum ist eine Stirnlampe mit Ersatzakku sinnvoll?",
+            "antworten": [
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung",
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 23,
+            "frage": "Rechtsgrundlagen: Wer gibt in der Regel Einsatzaufträge an Suchteams weiter?",
+            "antworten": [
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation",
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 24,
+            "frage": "Wetterkunde: Wie wirkt starker Wind auf Geruchsfahnen?",
+            "antworten": [
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf",
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 25,
+            "frage": "Geländekunde: Warum sind markante Geländepunkte wichtig?",
+            "antworten": [
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen",
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 26,
+            "frage": "Einsatzsicherheit: Warum wird ein Suchteam am Sammelpunkt registriert?",
+            "antworten": [
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung",
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 27,
+            "frage": "Anzeigeverhalten: Welche Anzeigeform kann ein Rettungshund zeigen?",
+            "antworten": [
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet",
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 28,
+            "frage": "Einsatztaktik: Welche Information gehört in den Suchauftrag?",
+            "antworten": [
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden",
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 29,
+            "frage": "Suchtaktik: Warum wird ein Suchgebiet in handhabbare Segmente geteilt?",
+            "antworten": [
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen",
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 30,
+            "frage": "Hundeführung: Was unterstützt die Motivation des Hundes im Training?",
+            "antworten": [
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten",
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 31,
+            "frage": "Erste Hilfe Hund: Wie sollte ein verletzter Hund bis zur tierärztlichen Versorgung betreut werden?",
+            "antworten": [
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen",
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 32,
+            "frage": "Funk: Warum sollten Funkdisziplin und Rufnamen eingehalten werden?",
+            "antworten": [
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen",
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 33,
+            "frage": "Flächensuche: Was unterscheidet Flächensuche vom Mantrailing?",
+            "antworten": [
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt",
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 34,
+            "frage": "Trümmersuche: Was ist vor dem Betreten einer Trümmerlage abzuklären?",
+            "antworten": [
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen",
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 35,
+            "frage": "Mantrailing: Was ist beim Anriechen am Geruchsartikel wichtig?",
+            "antworten": [
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen",
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 36,
+            "frage": "Ausrüstung: Welche Kennzeichnung hilft im Einsatzgebiet?",
+            "antworten": [
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel",
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 37,
+            "frage": "Rechtsgrundlagen: Warum sollten Fotos von Einsatzstellen nicht privat veröffentlicht werden?",
+            "antworten": [
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden",
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 38,
+            "frage": "Wetterkunde: Warum kann Nebel die Suche beeinflussen?",
+            "antworten": [
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe",
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 39,
+            "frage": "Geländekunde: Was ist beim Queren von Bächen oder Gräben zu beachten?",
+            "antworten": [
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung",
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 40,
+            "frage": "Einsatzsicherheit: Was ist bei Straßenverkehr im Einsatzgebiet wichtig?",
+            "antworten": [
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund",
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 41,
+            "frage": "Anzeigeverhalten: Warum wird Anzeigeverhalten regelmäßig trainiert?",
+            "antworten": [
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort",
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 42,
+            "frage": "Einsatztaktik: Warum werden Kräfte am Bereitstellungsraum gesammelt?",
+            "antworten": [
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird",
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 43,
+            "frage": "Suchtaktik: Welche Information hilft bei der Priorisierung von Suchbereichen?",
+            "antworten": [
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren",
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 44,
+            "frage": "Hundeführung: Warum sind klare Start- und Freigabesignale wichtig?",
+            "antworten": [
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben",
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 45,
+            "frage": "Erste Hilfe Hund: Welche Maßnahme passt bei einer leichten Schnittverletzung nach der Suche?",
+            "antworten": [
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen",
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 46,
+            "frage": "Funk: Was ist vor dem Wechsel eines Funkkanals notwendig?",
+            "antworten": [
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln",
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 47,
+            "frage": "Flächensuche: Warum arbeitet der Hund in der Flächensuche häufig frei?",
+            "antworten": [
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag",
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 48,
+            "frage": "Trümmersuche: Welche Anzeige ist in der Trümmersuche besonders wertvoll?",
+            "antworten": [
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume",
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 49,
+            "frage": "Mantrailing: Wie arbeitet der Hund im Mantrailing meist?",
+            "antworten": [
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug",
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 50,
+            "frage": "Ausrüstung: Was gehört zur persönlichen Schutzausrüstung?",
+            "antworten": [
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung",
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 51,
+            "frage": "Rechtsgrundlagen: Was ist bei Aussagen gegenüber Angehörigen zu beachten?",
+            "antworten": [
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation",
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 52,
+            "frage": "Wetterkunde: Was ist bei Hitze für den Hund besonders kritisch?",
+            "antworten": [
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf",
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 53,
+            "frage": "Geländekunde: Warum werden Höhenlinien auf Karten genutzt?",
+            "antworten": [
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen",
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 54,
+            "frage": "Einsatzsicherheit: Warum sollen Teams nicht ohne Rückmeldung den Abschnitt wechseln?",
+            "antworten": [
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung",
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 55,
+            "frage": "Anzeigeverhalten: Was ist nach einer Anzeige zuerst wichtig?",
+            "antworten": [
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet",
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 56,
+            "frage": "Einsatztaktik: Was ist bei einem Fundort taktisch wichtig?",
+            "antworten": [
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden",
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 57,
+            "frage": "Suchtaktik: Was ist bei dichtem Bewuchs taktisch sinnvoll?",
+            "antworten": [
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen",
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 58,
+            "frage": "Hundeführung: Was ist bei Pausen während längerer Suchlagen zu beachten?",
+            "antworten": [
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten",
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 59,
+            "frage": "Erste Hilfe Hund: Warum gehört Wasser für den Hund zur Basisausrüstung?",
+            "antworten": [
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen",
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 60,
+            "frage": "Funk: Welche Angabe gehört zu einer Fundmeldung per Funk?",
+            "antworten": [
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen",
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 61,
+            "frage": "Flächensuche: Was ist bei einer Anzeige in der Flächensuche wichtig?",
+            "antworten": [
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt",
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 62,
+            "frage": "Trümmersuche: Warum dürfen Trümmer nicht eigenmächtig bewegt werden?",
+            "antworten": [
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen",
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 63,
+            "frage": "Mantrailing: Warum kann eine Spur über verschiedene Untergründe führen?",
+            "antworten": [
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen",
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 64,
+            "frage": "Ausrüstung: Warum sollte Wasser für Mensch und Hund mitgeführt werden?",
+            "antworten": [
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel",
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 65,
+            "frage": "Rechtsgrundlagen: Warum ist eine saubere Einsatzdokumentation wichtig?",
+            "antworten": [
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden",
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 66,
+            "frage": "Wetterkunde: Warum kann Regen alte Spuren verändern?",
+            "antworten": [
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe",
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 67,
+            "frage": "Geländekunde: Welche Gefahr besteht an steilen Hängen?",
+            "antworten": [
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung",
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 68,
+            "frage": "Einsatzsicherheit: Was ist bei Jagdbetrieb im Gebiet zu beachten?",
+            "antworten": [
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund",
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 69,
+            "frage": "Anzeigeverhalten: Warum darf der Hund die gefundene Person nicht bedrängen?",
+            "antworten": [
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort",
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 70,
+            "frage": "Einsatztaktik: Warum sind Lagebesprechungen während langer Einsätze sinnvoll?",
+            "antworten": [
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird",
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 71,
+            "frage": "Suchtaktik: Wie kann eine bereits abgesuchte Fläche nachvollziehbar gemacht werden?",
+            "antworten": [
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren",
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 72,
+            "frage": "Hundeführung: Wie erkennt die Hundeführung mögliche Überforderung?",
+            "antworten": [
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben",
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 73,
+            "frage": "Erste Hilfe Hund: Was ist bei Verdacht auf Vergiftung wichtig?",
+            "antworten": [
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen",
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 74,
+            "frage": "Funk: Warum sind kurze Rückmeldungen im Einsatz vorteilhaft?",
+            "antworten": [
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln",
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 75,
+            "frage": "Flächensuche: Welche Geruchsquelle sucht ein Flächensuchhund typischerweise?",
+            "antworten": [
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag",
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 76,
+            "frage": "Trümmersuche: Was erschwert die Witterung in Trümmern?",
+            "antworten": [
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume",
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 77,
+            "frage": "Mantrailing: Was bedeutet eine Negativanzeige im Mantrailing?",
+            "antworten": [
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug",
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 78,
+            "frage": "Ausrüstung: Welche Unterlagen können am Sammelpunkt benötigt werden?",
+            "antworten": [
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung",
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 79,
+            "frage": "Rechtsgrundlagen: Welche Rolle spielen Weisungen der Einsatzleitung?",
+            "antworten": [
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation",
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 80,
+            "frage": "Wetterkunde: Wie beeinflusst Thermik die Geruchsausbreitung?",
+            "antworten": [
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf",
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 81,
+            "frage": "Geländekunde: Warum sollten Wegepunkte im GPS gespeichert werden?",
+            "antworten": [
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen",
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 82,
+            "frage": "Einsatzsicherheit: Warum sind Pausen Teil der Einsatzsicherheit?",
+            "antworten": [
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung",
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 83,
+            "frage": "Anzeigeverhalten: Wie wird eine Fehlanzeige im Training behandelt?",
+            "antworten": [
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet",
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 84,
+            "frage": "Einsatztaktik: Wie können mehrere Hundeteams koordiniert werden?",
+            "antworten": [
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden",
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 85,
+            "frage": "Suchtaktik: Warum sollte die Windrichtung vor Suchbeginn geprüft werden?",
+            "antworten": [
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen",
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 86,
+            "frage": "Hundeführung: Warum sollte der Hund vor dem Einsatz gelöst und kontrolliert werden?",
+            "antworten": [
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten",
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 87,
+            "frage": "Erste Hilfe Hund: Wie kann eine Unterkühlung des Hundes vermieden werden?",
+            "antworten": [
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen",
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 88,
+            "frage": "Funk: Was sollte bei schlechtem Funkempfang versucht werden?",
+            "antworten": [
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen",
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 89,
+            "frage": "Flächensuche: Warum ist Wind in der Flächensuche bedeutsam?",
+            "antworten": [
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt",
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 90,
+            "frage": "Trümmersuche: Warum ist die Zusammenarbeit mit Statikern oder Feuerwehr wichtig?",
+            "antworten": [
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen",
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 91,
+            "frage": "Mantrailing: Warum ist Kontamination des Geruchsartikels problematisch?",
+            "antworten": [
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen",
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 92,
+            "frage": "Ausrüstung: Warum ist wetterangepasste Kleidung wichtig?",
+            "antworten": [
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel",
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 93,
+            "frage": "Rechtsgrundlagen: Warum dürfen Suchteams nicht eigenmächtig in private Bereiche eindringen?",
+            "antworten": [
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden",
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 94,
+            "frage": "Wetterkunde: Was ist bei Gewitter im Suchgebiet zu tun?",
+            "antworten": [
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe",
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 95,
+            "frage": "Geländekunde: Was ist in dichtem Unterholz einsatztaktisch schwierig?",
+            "antworten": [
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung",
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 96,
+            "frage": "Einsatzsicherheit: Welche Gefahr besteht durch lose Leinen oder Ausrüstung?",
+            "antworten": [
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund",
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 97,
+            "frage": "Anzeigeverhalten: Warum muss die Anzeige für Dritte nachvollziehbar sein?",
+            "antworten": [
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort",
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 98,
+            "frage": "Einsatztaktik: Warum wird ein Einsatzprotokoll geführt?",
+            "antworten": [
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird",
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 99,
+            "frage": "Suchtaktik: Was ist bei parallelen Suchteams wichtig?",
+            "antworten": [
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren",
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 100,
+            "frage": "Hundeführung: Welche Haltung hilft dem Hund bei schwierigen Aufgaben?",
+            "antworten": [
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben",
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 101,
+            "frage": "Erste Hilfe Hund: Warum sollte der Hundeführer normale Vitalwerte seines Hundes kennen?",
+            "antworten": [
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen",
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 102,
+            "frage": "Funk: Warum dürfen sensible Personendaten nicht unnötig gefunkt werden?",
+            "antworten": [
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln",
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 103,
+            "frage": "Flächensuche: Was gehört zur Dokumentation einer abgesuchten Fläche?",
+            "antworten": [
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag",
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 104,
+            "frage": "Trümmersuche: Welche Verletzungsgefahr besteht für den Hund auf Trümmern?",
+            "antworten": [
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume",
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 105,
+            "frage": "Mantrailing: Welche Information hilft beim Trail-Ansatz?",
+            "antworten": [
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug",
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 106,
+            "frage": "Ausrüstung: Was sollte zur Orientierung mitgeführt werden?",
+            "antworten": [
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung",
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 107,
+            "frage": "Rechtsgrundlagen: Was ist bei Fundstücken zu beachten?",
+            "antworten": [
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation",
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 108,
+            "frage": "Wetterkunde: Warum ist Luftfeuchte für Witterung relevant?",
+            "antworten": [
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf",
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 109,
+            "frage": "Geländekunde: Warum sind Rückzugswege vorab wichtig?",
+            "antworten": [
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen",
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 110,
+            "frage": "Einsatzsicherheit: Warum ist eine Notfallmeldung mit Standort wichtig?",
+            "antworten": [
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung",
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 111,
+            "frage": "Anzeigeverhalten: Was ist bei einem Verbeller zu beachten?",
+            "antworten": [
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet",
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 112,
+            "frage": "Einsatztaktik: Was ist bei einem Wechsel der Einsatzleitung wichtig?",
+            "antworten": [
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden",
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 113,
+            "frage": "Suchtaktik: Welche Rolle spielt die letzte bekannte Position einer vermissten Person?",
+            "antworten": [
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen",
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 114,
+            "frage": "Hundeführung: Warum ist eine gute Bindung zwischen Mensch und Hund einsatzrelevant?",
+            "antworten": [
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten",
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 115,
+            "frage": "Erste Hilfe Hund: Was ist bei einer Augenreizung durch Staub sinnvoll?",
+            "antworten": [
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen",
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 116,
+            "frage": "Funk: Was ist bei einer Lagemeldung aus dem Suchabschnitt hilfreich?",
+            "antworten": [
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen",
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 117,
+            "frage": "Flächensuche: Warum werden vermutete Aufenthaltsorte priorisiert?",
+            "antworten": [
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt",
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 118,
+            "frage": "Trümmersuche: Was ist bei Hohlräumen und Schächten zu beachten?",
+            "antworten": [
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen",
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 119,
+            "frage": "Mantrailing: Was ist bei Kreuzungen während des Trails wichtig?",
+            "antworten": [
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen",
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 120,
+            "frage": "Ausrüstung: Welche Ausrüstung unterstützt die Dokumentation?",
+            "antworten": [
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel",
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 121,
+            "frage": "Rechtsgrundlagen: Warum müssen Qualifikationsnachweise aktuell sein?",
+            "antworten": [
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden",
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 122,
+            "frage": "Wetterkunde: Welche Tageszeit kann Geruchsausbreitung verändern?",
+            "antworten": [
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe",
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 123,
+            "frage": "Geländekunde: Wie helfen Koordinaten bei einer Fundmeldung?",
+            "antworten": [
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung",
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 124,
+            "frage": "Einsatzsicherheit: Was ist bei Kontakt mit aggressiven Tieren zu tun?",
+            "antworten": [
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund",
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 125,
+            "frage": "Anzeigeverhalten: Welche Rolle spielt die Belohnung nach der Anzeige?",
+            "antworten": [
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort",
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 126,
+            "frage": "Einsatztaktik: Warum priorisiert man wahrscheinliche Aufenthaltsorte?",
+            "antworten": [
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird",
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 127,
+            "frage": "Suchtaktik: Warum werden Wege, Gräben und Waldränder besonders beachtet?",
+            "antworten": [
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren",
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 128,
+            "frage": "Hundeführung: Was ist nach einem Fund für die Hundeführung wichtig?",
+            "antworten": [
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben",
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 129,
+            "frage": "Erste Hilfe Hund: Welche Reaktion ist bei Lahmheit nach Trümmerkontakt angemessen?",
+            "antworten": [
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen",
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 130,
+            "frage": "Funk: Warum sollte eine empfangene Anweisung bestätigt werden?",
+            "antworten": [
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln",
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 131,
+            "frage": "Flächensuche: Welche Person wird in der Flächensuche gefunden?",
+            "antworten": [
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag",
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 132,
+            "frage": "Trümmersuche: Warum wird die Einsatzstelle in Trümmern besonders gesichert?",
+            "antworten": [
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume",
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 133,
+            "frage": "Mantrailing: Warum dokumentiert man den Verlauf eines Trails?",
+            "antworten": [
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug",
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 134,
+            "frage": "Ausrüstung: Warum ist ein geladenes Mobiltelefon nicht allein ausreichend?",
+            "antworten": [
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung",
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 135,
+            "frage": "Rechtsgrundlagen: Welche Information darf nur nach Freigabe weitergegeben werden?",
+            "antworten": [
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation",
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 136,
+            "frage": "Wetterkunde: Was bedeutet Windschatten für die Suche?",
+            "antworten": [
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf",
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 137,
+            "frage": "Geländekunde: Was ist bei Moor- oder Sumpfgelände zu beachten?",
+            "antworten": [
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen",
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 138,
+            "frage": "Einsatzsicherheit: Warum wird die eigene Belastung beobachtet?",
+            "antworten": [
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung",
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 139,
+            "frage": "Anzeigeverhalten: Warum wird Anzeige auch unter Ablenkung geübt?",
+            "antworten": [
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet",
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 140,
+            "frage": "Einsatztaktik: Was ist bei parallelem Einsatz von Technik und Hundeteams zu beachten?",
+            "antworten": [
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden",
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 141,
+            "frage": "Suchtaktik: Was hilft, Suchlücken zwischen zwei Teams zu vermeiden?",
+            "antworten": [
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen",
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 142,
+            "frage": "Hundeführung: Warum sollte die Belohnung zum Anzeigeverhalten passen?",
+            "antworten": [
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten",
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 143,
+            "frage": "Erste Hilfe Hund: Warum ist ein Erste-Hilfe-Set für Hunde im Einsatzfahrzeug wichtig?",
+            "antworten": [
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen",
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 144,
+            "frage": "Funk: Was ist bei mehreren Organisationen auf einem Kanal wichtig?",
+            "antworten": [
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen",
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 145,
+            "frage": "Flächensuche: Was ist bei Nacht in der Flächensuche zusätzlich wichtig?",
+            "antworten": [
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt",
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 146,
+            "frage": "Trümmersuche: Was gehört zu einer Lageeinweisung in der Trümmersuche?",
+            "antworten": [
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen",
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 147,
+            "frage": "Mantrailing: Wie unterscheidet sich Mantrailing von Flächensuche?",
+            "antworten": [
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen",
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 148,
+            "frage": "Ausrüstung: Was gehört in ein kleines Reparatur- oder Reservefach?",
+            "antworten": [
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel",
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 149,
+            "frage": "Rechtsgrundlagen: Warum ist Schweigepflicht im Einsatz wichtig?",
+            "antworten": [
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden",
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 150,
+            "frage": "Wetterkunde: Warum sollte die Wetterentwicklung beobachtet werden?",
+            "antworten": [
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe",
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 151,
+            "frage": "Geländekunde: Warum können Zäune und Weiden die Suche beeinflussen?",
+            "antworten": [
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung",
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 152,
+            "frage": "Einsatzsicherheit: Was ist bei Arbeiten in der Nähe von Wasser wichtig?",
+            "antworten": [
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund",
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 153,
+            "frage": "Anzeigeverhalten: Was ist bei einer Rückverweisanzeige wichtig?",
+            "antworten": [
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort",
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 154,
+            "frage": "Einsatztaktik: Warum werden Suchzeiten und Pausen geplant?",
+            "antworten": [
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird",
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 155,
+            "frage": "Suchtaktik: Wann sollte eine Suchtaktik angepasst werden?",
+            "antworten": [
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren",
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 156,
+            "frage": "Hundeführung: Was ist bei der Arbeit an Straßen oder Wegen besonders zu beachten?",
+            "antworten": [
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben",
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 157,
+            "frage": "Erste Hilfe Hund: Was sollte bei einem Kreislaufproblem des Hundes vermieden werden?",
+            "antworten": [
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen",
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 158,
+            "frage": "Funk: Welche Information gehört in eine Standortmeldung?",
+            "antworten": [
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln",
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 159,
+            "frage": "Flächensuche: Warum braucht ein Flächensuchteam Orientierungsmittel?",
+            "antworten": [
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag",
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 160,
+            "frage": "Trümmersuche: Warum muss der Hund trittsicher trainiert werden?",
+            "antworten": [
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume",
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 161,
+            "frage": "Mantrailing: Was ist bei starkem Publikumsverkehr zu beachten?",
+            "antworten": [
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug",
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 162,
+            "frage": "Ausrüstung: Warum sollten Einsatzmittel regelmäßig geprüft werden?",
+            "antworten": [
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung",
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 163,
+            "frage": "Rechtsgrundlagen: Was ist bei Drohnen- oder Technikunterstützung rechtlich zu prüfen?",
+            "antworten": [
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation",
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 164,
+            "frage": "Wetterkunde: Wie kann Frost die Bodenverhältnisse beeinflussen?",
+            "antworten": [
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf",
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 165,
+            "frage": "Geländekunde: Was ist bei Dunkelheit im Gelände wichtig?",
+            "antworten": [
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen",
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 166,
+            "frage": "Einsatzsicherheit: Warum sollen Warnwesten getragen werden?",
+            "antworten": [
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung",
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 167,
+            "frage": "Anzeigeverhalten: Warum sollte der Hundeführer Körpersprache lesen können?",
+            "antworten": [
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet",
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 168,
+            "frage": "Einsatztaktik: Welche Rolle spielt die Vermisstenbeschreibung?",
+            "antworten": [
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden",
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 169,
+            "frage": "Suchtaktik: Warum ist eine Rückmeldung nach Abschluss eines Abschnitts wichtig?",
+            "antworten": [
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen",
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 170,
+            "frage": "Hundeführung: Wie sollte die Hundeführung mit Ablenkungen umgehen?",
+            "antworten": [
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten",
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 171,
+            "frage": "Erste Hilfe Hund: Wie wird eine Pfote nach dem Entfernen kleiner Fremdkörper geschützt?",
+            "antworten": [
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen",
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 172,
+            "frage": "Funk: Warum sollte der Akku des Funkgeräts vorab geprüft werden?",
+            "antworten": [
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen",
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 173,
+            "frage": "Flächensuche: Wie wird eine Suche in großen Waldgebieten häufig organisiert?",
+            "antworten": [
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt",
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 174,
+            "frage": "Trümmersuche: Welche Rolle spielt Lärmtraining für Trümmersuchhunde?",
+            "antworten": [
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen",
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 175,
+            "frage": "Mantrailing: Warum kann Alter der Spur eine Rolle spielen?",
+            "antworten": [
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen",
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 176,
+            "frage": "Ausrüstung: Welche Ausrüstung kann den Hund in Trümmern schützen?",
+            "antworten": [
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel",
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 177,
+            "frage": "Rechtsgrundlagen: Warum sollte ein Hund im öffentlichen Raum kontrollierbar sein?",
+            "antworten": [
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden",
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 178,
+            "frage": "Wetterkunde: Was ist bei Sturmwarnung einsatztaktisch wichtig?",
+            "antworten": [
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe",
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 179,
+            "frage": "Geländekunde: Warum sollte man das Suchgebiet nicht allein verlassen?",
+            "antworten": [
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung",
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 180,
+            "frage": "Einsatzsicherheit: Was ist bei Dunkelheit zusätzlich abzusichern?",
+            "antworten": [
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund",
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      },
+      {
+            "id": 181,
+            "frage": "Anzeigeverhalten: Wie kann eine Anzeige dokumentiert werden?",
+            "antworten": [
+                  "Der Hund meldet den Fund klar und wiederholbar",
+                  "Der Hund verlässt die Fundstelle sofort",
+                  "Der Hund ignoriert Personen",
+                  "Der Hund bellt wahllos im Suchgebiet"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Die Anzeige muss für die Hundeführung eindeutig erkennbar und trainiert sein."
+      },
+      {
+            "id": 182,
+            "frage": "Einsatztaktik: Warum werden Suchergebnisse auch bei Nichtfund gemeldet?",
+            "antworten": [
+                  "Damit niemand dokumentieren muss",
+                  "Damit Funkkontakt vermieden wird",
+                  "Damit Hunde gleichzeitig am selben Punkt suchen",
+                  "Damit Gebiete systematisch und nachvollziehbar abgesucht werden"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Abschnittsbildung erleichtert Koordination, Dokumentation und Priorisierung."
+      },
+      {
+            "id": 183,
+            "frage": "Suchtaktik: Was gehört in eine kurze Lageeinweisung vor der Suche?",
+            "antworten": [
+                  "Funkgerät ausschalten",
+                  "Markierungen grundsätzlich ignorieren",
+                  "Suchgebiet in Abschnitte einteilen",
+                  "Hund ohne Absprache frei laufen lassen"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Eine strukturierte Suche wird geplant, in Abschnitte gegliedert und mit der Einsatzleitung abgestimmt."
+      },
+      {
+            "id": 184,
+            "frage": "Hundeführung: Warum ist regelmäßiges Training unter wechselnden Bedingungen sinnvoll?",
+            "antworten": [
+                  "Den Hund möglichst verwirren",
+                  "Hund kurz einweisen und Startsignal klar geben",
+                  "Hund direkt nach dem Fressen starten",
+                  "Leine absichtlich verknoten"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Klare Signale, passende Vorbereitung und ein ruhiger Start helfen dem Hund bei der Arbeit."
+      },
+      {
+            "id": 185,
+            "frage": "Erste Hilfe Hund: Wann sollte ein Hund aus der Suche genommen werden?",
+            "antworten": [
+                  "Druckverband anlegen und tierärztliche Hilfe organisieren",
+                  "Hund weiterarbeiten lassen",
+                  "Wunde mit Erde bedecken",
+                  "Maulkorb grundsätzlich entfernen und wegwerfen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Starke Blutungen müssen kontrolliert und anschließend fachkundig versorgt werden."
+      },
+      {
+            "id": 186,
+            "frage": "Funk: Was ist bei einem Notruf über Funk entscheidend?",
+            "antworten": [
+                  "Lange Privatgespräche führen",
+                  "Rufnamen wechseln",
+                  "Unbestätigte Gerüchte weitergeben",
+                  "Kurz, eindeutig und diszipliniert sprechen"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Funkkanäle müssen frei und Meldungen eindeutig bleiben, damit wichtige Informationen ankommen."
+      },
+      {
+            "id": 187,
+            "frage": "Flächensuche: Was sollte nach einer erfolglosen Flächensuche gemeldet werden?",
+            "antworten": [
+                  "Suche ausschließlich in Gebäuden",
+                  "Training ohne Suchauftrag",
+                  "Absuchen größerer Gebiete nach menschlicher Witterung",
+                  "Verfolgen einer individuellen Spur auf Asphalt"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Bei der Flächensuche sucht der Hund in einem Gebiet nach menschlicher Witterung, nicht zwingend nach einer bestimmten Spur."
+      },
+      {
+            "id": 188,
+            "frage": "Trümmersuche: Wann wird ein Suchbereich in Trümmern gesperrt?",
+            "antworten": [
+                  "Zu helle Warnwesten",
+                  "Instabile Strukturen und Hohlräume",
+                  "Zu kurze Anfahrt",
+                  "Zu viele Leckerchen"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Trümmerlagen können nachrutschen oder einbrechen; Sicherheit und Statik sind entscheidend."
+      },
+      {
+            "id": 189,
+            "frage": "Mantrailing: Was sollte bei einem Trailabbruch gemeldet werden?",
+            "antworten": [
+                  "Hund folgt dem Individualgeruch einer bestimmten Person",
+                  "Hund sucht nur Spielzeug",
+                  "Hund arbeitet ohne Geruchsartikel",
+                  "Hund darf keine Leine tragen"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Beim Mantrailing orientiert sich der Hund an einem Geruchsartikel und verfolgt die individuelle Spur."
+      },
+      {
+            "id": 190,
+            "frage": "Ausrüstung: Was ist vor Einsatzbeginn an der Ausrüstung zu kontrollieren?",
+            "antworten": [
+                  "Nur Hundespielzeug",
+                  "Ausschließlich Zivilkleidung",
+                  "Unbeschriftete Medikamente für Menschen",
+                  "Erste-Hilfe-Material, Wasser, Lampe und Funkmittel"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Einsatzkräfte benötigen Material für Kommunikation, Orientierung, Versorgung und Sicherheit."
+      },
+      {
+            "id": 191,
+            "frage": "Rechtsgrundlagen: Was ist bei der Zusammenarbeit mit Polizei oder Feuerwehr wichtig?",
+            "antworten": [
+                  "Namen werden über soziale Medien verteilt",
+                  "Funkmeldungen ersetzen jede Dokumentation",
+                  "Informationen zu Vermissten dürfen nur zweckgebunden geteilt werden",
+                  "Fotos dürfen immer frei veröffentlicht werden"
+            ],
+            "richtigeAntwort": 2,
+            "erklaerung": "Personenbezogene Daten sind sensibel und dürfen nur im Einsatzkontext und nach Vorgaben verarbeitet werden."
+      },
+      {
+            "id": 192,
+            "frage": "Wetterkunde: Warum kann Schneefall die Orientierung erschweren?",
+            "antworten": [
+                  "Marke der Einsatzjacke",
+                  "Windrichtung und Temperaturverlauf",
+                  "Farbe der Hundeleine",
+                  "Batteriestand der Taschenlampe"
+            ],
+            "richtigeAntwort": 1,
+            "erklaerung": "Wind, Temperatur, Luftfeuchte und Gelände beeinflussen, wie Geruch transportiert wird."
+      },
+      {
+            "id": 193,
+            "frage": "Geländekunde: Welche Information liefert eine topografische Karte?",
+            "antworten": [
+                  "Karte, Kompass oder GPS mit klaren Wegpunkten",
+                  "Nur dem Zufall folgen",
+                  "Wege nie markieren",
+                  "Alle Teammitglieder trennen ohne Meldung"
+            ],
+            "richtigeAntwort": 0,
+            "erklaerung": "Orientierungsmittel und abgesprochene Punkte reduzieren das Risiko, sich zu verlaufen."
+      },
+      {
+            "id": 194,
+            "frage": "Einsatzsicherheit: Wann muss ein Einsatz für ein Team abgebrochen werden?",
+            "antworten": [
+                  "Schnelligkeit um jeden Preis",
+                  "Alleinentscheidung ohne Rückmeldung",
+                  "Ausrüstung im Fahrzeug lassen",
+                  "Sicherheit von Mensch und Hund"
+            ],
+            "richtigeAntwort": 3,
+            "erklaerung": "Keine Suche rechtfertigt unnötige Gefährdung; Sicherheit steht vor Geschwindigkeit."
+      }
+]
+
+    const state = {
+      queue: [],
+      current: null,
+      answeredCurrent: false,
+      correct: 0,
+      answered: 0,
+      mastered: new Set(),
+      pendingRepeats: new Set(),
+    };
+
+    const els = {
+      score: document.getElementById('score'),
+      percent: document.getElementById('percent'),
+      remaining: document.getElementById('remaining'),
+      repeatCount: document.getElementById('repeatCount'),
+      progressBar: document.getElementById('progressBar'),
+      questionMeta: document.getElementById('questionMeta'),
+      questionText: document.getElementById('questionText'),
+      answers: document.getElementById('answers'),
+      feedback: document.getElementById('feedback'),
+      nextBtn: document.getElementById('nextBtn'),
+      restartBtn: document.getElementById('restartBtn'),
+      quizCard: document.getElementById('quizCard'),
+      done: document.getElementById('done'),
+    };
+
+    function shuffle(items) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function resetTraining() {
+      state.queue = shuffle(fragen);
+      state.current = null;
+      state.answeredCurrent = false;
+      state.correct = 0;
+      state.answered = 0;
+      state.mastered = new Set();
+      state.pendingRepeats = new Set();
+      els.done.classList.remove('show');
+      els.quizCard.style.display = 'block';
+      updateStats();
+      showNextQuestion();
+    }
+
+    function updateStats() {
+      els.score.textContent = `${state.correct} / ${state.answered}`;
+      els.percent.textContent = state.answered ? `${Math.round((state.correct / state.answered) * 100)}%` : '0%';
+      els.remaining.textContent = Math.max(fragen.length - state.mastered.size, 0);
+      els.repeatCount.textContent = state.pendingRepeats.size;
+      els.progressBar.style.width = `${Math.round((state.mastered.size / fragen.length) * 100)}%`;
+    }
+
+    function showNextQuestion() {
+      if (state.queue.length === 0) {
+        if (state.mastered.size === fragen.length) {
+          els.quizCard.style.display = 'none';
+          els.done.classList.add('show');
+          els.nextBtn.disabled = true;
+          updateStats();
+          return;
+        }
+        state.queue = shuffle(fragen.filter((frage) => !state.mastered.has(frage.id)));
+      }
+
+      state.current = state.queue.shift();
+      state.answeredCurrent = false;
+      els.nextBtn.disabled = true;
+      els.feedback.className = 'feedback';
+      els.feedback.textContent = '';
+      els.questionMeta.textContent = `Frage ${state.mastered.size + 1} von ${fragen.length} · ID ${state.current.id}`;
+      els.questionText.textContent = state.current.frage;
+      els.answers.innerHTML = '';
+
+      state.current.antworten.forEach((antwort, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'answer';
+        button.textContent = antwort;
+        button.addEventListener('click', () => answerQuestion(index));
+        els.answers.appendChild(button);
+      });
+      updateStats();
+    }
+
+    function answerQuestion(index) {
+      if (state.answeredCurrent || !state.current) return;
+
+      const isCorrect = index === state.current.richtigeAntwort;
+      state.answeredCurrent = true;
+      state.answered += 1;
+      if (isCorrect) {
+        state.correct += 1;
+        state.mastered.add(state.current.id);
+        state.pendingRepeats.delete(state.current.id);
+      } else {
+        state.pendingRepeats.add(state.current.id);
+        const insertAt = Math.min(state.queue.length, 5 + Math.floor(Math.random() * 8));
+        state.queue.splice(insertAt, 0, state.current);
+      }
+
+      [...els.answers.children].forEach((button, answerIndex) => {
+        button.disabled = true;
+        if (answerIndex === state.current.richtigeAntwort) button.classList.add('correct');
+        if (answerIndex === index && !isCorrect) button.classList.add('wrong');
+      });
+
+      if (isCorrect) {
+        els.feedback.className = 'feedback good show';
+        els.feedback.textContent = 'Richtig! Sehr gut – weiter so.';
+      } else {
+        els.feedback.className = 'feedback bad show';
+        els.feedback.textContent = `Nicht ganz. Richtig ist: „${state.current.antworten[state.current.richtigeAntwort]}“. ${state.current.erklaerung}`;
+      }
+
+      els.nextBtn.disabled = false;
+      updateStats();
+    }
+
+    els.nextBtn.addEventListener('click', showNextQuestion);
+    els.restartBtn.addEventListener('click', resetTraining);
+    resetTraining();
+  </script>
+</body>
+</html>
