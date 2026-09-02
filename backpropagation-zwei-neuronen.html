@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Backpropagation an einem einfachen Beispiel</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f3f6fb;
+    --card: #ffffff;
+    --text: #172033;
+    --muted: #5b667a;
+    --border: #d7deea;
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --forward: #0f766e;
+    --loss: #dc2626;
+    --backward: #7c3aed;
+    --update: #15803d;
+    --shadow: 0 16px 38px rgba(15, 23, 42, .09);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    background: linear-gradient(135deg, #eef5ff 0%, var(--bg) 45%, #f8fafc 100%);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 1rem;
+  }
+  main { width: min(880px, 100%); margin: 0 auto; display: grid; gap: 1rem; }
+  header.hero, section.card {
+    background: rgba(255,255,255,.96);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 1.1rem 1.3rem;
+  }
+  h1 { margin: 0 0 .35rem; font-size: clamp(1.35rem, 3vw, 1.9rem); }
+  h2 { margin: 0 0 .5rem; font-size: 1.2rem; display: flex; align-items: center; gap: .5rem; }
+  .subtitle { color: var(--muted); margin: 0; max-width: 68ch; }
+  .source { color: var(--muted); font-size: .82rem; margin-top: .6rem; }
+  .source a { color: var(--primary); }
+
+  /* Netz-Diagramm */
+  #networkSvg { width: 100%; height: auto; display: block; }
+  .neuron-circle { fill: #fff; stroke: #172033; stroke-width: 2.2; }
+  .neuron-circle.input { fill: #ccfbf1; }
+  .neuron-circle.output { fill: #dbeafe; }
+  .neuron-label { text-anchor: middle; dominant-baseline: middle; font-weight: 800; font-size: 16px; fill: #0f172a; }
+  .neuron-sub { text-anchor: middle; font-size: 12.5px; fill: #475569; }
+  .edge-fwd, .edge-back { fill: none; stroke-width: 3; transition: opacity .25s; }
+  .edge-fwd { stroke: var(--forward); }
+  .edge-back { stroke: var(--backward); stroke-dasharray: 6 5; }
+  .edge-label { text-anchor: middle; font-size: 13px; font-weight: 800; }
+  .edge-label.fwd { fill: var(--forward); }
+  .edge-label.back { fill: var(--backward); }
+  .dim { opacity: .15; }
+
+  /* Einstellungen */
+  .settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .7rem; margin-top: .9rem; }
+  .field label { display: block; font-weight: 700; font-size: .85rem; color: #263247; margin-bottom: .3rem; }
+  .field input {
+    width: 100%; border: 1px solid #cbd5e1; border-radius: 10px;
+    padding: .45rem .55rem; font: inherit; background: #fff; color: var(--text);
+  }
+  .settings-row { display: flex; justify-content: space-between; align-items: center; gap: .6rem; flex-wrap: wrap; margin-top: .8rem; }
+  button {
+    border: 0; border-radius: 10px; padding: .55rem .9rem; font-weight: 800;
+    cursor: pointer; background: var(--primary); color: #fff; font-size: .88rem;
+  }
+  button:hover { background: var(--primary-dark); }
+  button.secondary { background: #334155; }
+  button.ghost { background: #eef2f7; color: #334155; }
+  button:disabled { opacity: .4; cursor: default; }
+
+  /* Stepper */
+  .stepper { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .step-dot {
+    flex: 1; min-width: 90px; text-align: center; padding: .5rem .3rem; border-radius: 10px;
+    background: #eef2f7; color: #64748b; font-weight: 700; font-size: .78rem; cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .step-dot.active { background: var(--primary); color: #fff; }
+  .step-dot.done { background: #e0f2ec; color: #0f766e; border-color: #bfe7d9; }
+
+  .step-badge {
+    display: inline-block; padding: .18rem .55rem; border-radius: 999px; font-size: .78rem;
+    font-weight: 800; color: #fff; margin-bottom: .5rem;
+  }
+  .badge-intro { background: #64748b; }
+  .badge-forward { background: var(--forward); }
+  .badge-loss { background: var(--loss); }
+  .badge-backward { background: var(--backward); }
+  .badge-update { background: var(--update); }
+  .badge-summary { background: var(--primary); }
+
+  .formula {
+    font-family: "Cambria Math", "Times New Roman", serif;
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: .6rem .8rem; margin: .5rem 0; overflow-x: auto; font-size: 1.05rem;
+  }
+  .term { display: inline-block; padding: .05rem .25rem; border-radius: .35rem; font-weight: 700; }
+  .term.x { background: rgba(15,118,110,.14); color: var(--forward); }
+  .term.l { background: rgba(220,38,38,.11); color: var(--loss); }
+  .term.b { background: rgba(124,58,237,.13); color: var(--backward); }
+  .term.u { background: rgba(21,128,61,.12); color: var(--update); }
+
+  .callout { border-left: 4px solid var(--primary); background: #eff6ff; border-radius: 10px; padding: .65rem .8rem; margin: .6rem 0; font-size: .92rem; color: #1e3a5f; }
+  .step-nav { display: flex; justify-content: space-between; margin-top: 1rem; gap: .6rem; }
+
+  table.history { width: 100%; border-collapse: collapse; margin-top: .5rem; font-size: .88rem; }
+  table.history th, table.history td { border: 1px solid #e2e8f0; padding: .35rem .5rem; text-align: center; }
+  table.history th { background: #f8fafc; }
+  details { border: 1px solid #e2e8f0; border-radius: 12px; padding: .5rem .7rem; margin-top: .7rem; background: #fdfdff; }
+  summary { cursor: pointer; font-weight: 800; font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <h1>Backpropagation verstehen: das kleinstmögliche Netz</h1>
+    <p class="subtitle">Zwei Neuronen, eine einzige Verbindung. An diesem minimalen Beispiel – wie im Video erklärt – lässt sich jeder Schritt der Backpropagation von Hand nachvollziehen: Forward Pass, Fehler, Kettenregel und Gewichtsupdate.</p>
+    <p class="source">Grundlage: <a href="https://youtu.be/8d6jf7s6_Qs" target="_blank" rel="noopener">Video zur Backpropagation</a> (Netz mit zwei Neuronen und einer Gewichtsverbindung). Die Zahlenwerte unten kannst du frei anpassen, z.&nbsp;B. auf die Werte aus dem Video.</p>
+  </header>
+
+  <section class="card">
+    <h2>Das Netz</h2>
+    <svg id="networkSvg" viewBox="0 0 640 190" role="img" aria-label="Netz mit Eingabeneuron, Gewicht und Ausgabeneuron"></svg>
+    <div class="settings">
+      <div class="field"><label for="xInput">Eingabe x</label><input id="xInput" type="number" step="0.1" value="2"></div>
+      <div class="field"><label for="wInput">Gewicht w</label><input id="wInput" type="number" step="0.05" value="0.3"></div>
+      <div class="field"><label for="yInput">Zielwert y</label><input id="yInput" type="number" step="0.05" value="0.9" min="0" max="1"></div>
+      <div class="field"><label for="etaInput">Lernrate η</label><input id="etaInput" type="number" step="0.05" value="0.3" min="0"></div>
+    </div>
+    <div class="settings-row">
+      <button id="resetBtn" class="ghost">Beispielwerte zurücksetzen</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="stepper" id="stepper"></div>
+    <div id="stepContent"></div>
+    <div class="step-nav">
+      <button id="prevBtn" class="secondary">← Zurück</button>
+      <button id="nextBtn">Weiter →</button>
+    </div>
+  </section>
+</main>
+
+<script>
+  const state = { x: 2, w: 0.3, y: 0.9, eta: 0.3, step: 0, history: [] };
+  const steps = [
+    { key: 'intro', label: 'Aufbau', badge: 'badge-intro' },
+    { key: 'forward', label: '1. Forward Pass', badge: 'badge-forward' },
+    { key: 'loss', label: '2. Fehler', badge: 'badge-loss' },
+    { key: 'chain', label: '3. Kettenregel', badge: 'badge-backward' },
+    { key: 'gradient', label: '4. Gradient', badge: 'badge-backward' },
+    { key: 'update', label: '5. Update', badge: 'badge-update' },
+    { key: 'summary', label: '6. Fazit', badge: 'badge-summary' },
+  ];
+
+  const svg = document.getElementById('networkSvg');
+  const stepperEl = document.getElementById('stepper');
+  const contentEl = document.getElementById('stepContent');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  const fmt = (v, d = 4) => {
+    if (!Number.isFinite(v)) return '0';
+    const r = Math.abs(v) < 1e-9 ? 0 : v;
+    return Number(r.toFixed(d)).toString();
+  };
+  const sigmoid = z => 1 / (1 + Math.exp(-z));
+
+  function compute() {
+    const { x, w, y, eta } = state;
+    const z = w * x;
+    const a = sigmoid(z);
+    const loss = 0.5 * (a - y) ** 2;
+    const dLda = a - y;
+    const dadz = a * (1 - a);
+    const dzdw = x;
+    const dLdw = dLda * dadz * dzdw;
+    const wNew = w - eta * dLdw;
+    return { x, w, y, eta, z, a, loss, dLda, dadz, dzdw, dLdw, wNew };
+  }
+
+  function make(name, attrs = {}, parent = svg) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', name);
+    Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+    parent.appendChild(el);
+    return el;
+  }
+
+  function renderSvg(data) {
+    svg.innerHTML = '';
+    make('defs').innerHTML = `
+      <marker id="arrowFwd" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#0f766e"/></marker>
+      <marker id="arrowBack" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#7c3aed"/></marker>`;
+
+    const cx1 = 120, cx2 = 500, cy = 95, r = 44;
+    const isForward = ['forward', 'loss'].includes(steps[state.step].key);
+    const isBackward = ['chain', 'gradient', 'update'].includes(steps[state.step].key);
+
+    const fwd = make('line', { x1: cx1 + r, y1: cy - 10, x2: cx2 - r, y2: cy - 10, class: 'edge-fwd', 'marker-end': 'url(#arrowFwd)' });
+    fwd.classList.toggle('dim', !isForward && steps[state.step].key !== 'intro' && steps[state.step].key !== 'summary');
+    make('text', { x: (cx1 + cx2) / 2, y: cy - 24, class: 'edge-label fwd' }).textContent = `w = ${fmt(data.w)}`;
+
+    const back = make('line', { x1: cx2 - r, y1: cy + 20, x2: cx1 + r, y2: cy + 20, class: 'edge-back', 'marker-end': 'url(#arrowBack)' });
+    back.classList.toggle('dim', !isBackward);
+    make('text', { x: (cx1 + cx2) / 2, y: cy + 42, class: 'edge-label back' }).textContent = 'Gradient ∂L/∂w';
+
+    make('circle', { cx: cx1, cy, r, class: 'neuron-circle input' });
+    make('text', { x: cx1, y: cy - 4, class: 'neuron-label' }).textContent = 'x';
+    make('text', { x: cx1, y: cy + 18, class: 'neuron-sub' }).textContent = fmt(data.x);
+    make('text', { x: cx1, y: cy - r - 12, class: 'neuron-sub', style: 'font-weight:800;fill:#0f172a;' }).textContent = 'Eingabe-Neuron';
+
+    make('circle', { cx: cx2, cy, r, class: 'neuron-circle output' });
+    make('text', { x: cx2, y: cy - 4, class: 'neuron-label' }).textContent = 'ŷ';
+    make('text', { x: cx2, y: cy + 18, class: 'neuron-sub' }).textContent = fmt(data.a);
+    make('text', { x: cx2, y: cy - r - 12, class: 'neuron-sub', style: 'font-weight:800;fill:#0f172a;' }).textContent = 'Ausgabe-Neuron (Sigmoid)';
+  }
+
+  function renderStepper() {
+    stepperEl.innerHTML = '';
+    steps.forEach((s, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'step-dot' + (i === state.step ? ' active' : i < state.step ? ' done' : '');
+      dot.textContent = s.label;
+      dot.addEventListener('click', () => { state.step = i; renderAll(); });
+      stepperEl.appendChild(dot);
+    });
+  }
+
+  function stepContent(data) {
+    const s = steps[state.step].key;
+    if (s === 'intro') return `
+      <span class="step-badge badge-intro">Aufbau des Netzes</span>
+      <p>Dieses Netz besteht aus genau <strong>zwei Neuronen</strong>, die über <strong>eine einzige gewichtete Verbindung</strong> w miteinander verbunden sind:</p>
+      <ul>
+        <li><strong>Eingabe-Neuron:</strong> gibt einfach den Wert x weiter.</li>
+        <li><strong>Ausgabe-Neuron:</strong> berechnet zunächst die gewichtete Summe z = w·x und wendet darauf die Sigmoid-Aktivierungsfunktion an: ŷ = σ(z).</li>
+      </ul>
+      <div class="formula">σ(z) = 1 / (1 + e<sup>−z</sup>)</div>
+      <p>Ziel des Trainings: Das Gewicht w so anpassen, dass die Ausgabe ŷ möglichst nahe an einen gewünschten <strong>Zielwert y</strong> kommt. Dazu misst man den Fehler und passt w in die Richtung an, in der der Fehler kleiner wird &ndash; das ist Backpropagation.</p>
+      <div class="callout">Stelle oben Werte für x, w, y und die Lernrate η ein und klicke dann auf „Weiter“, um die Rechnung Schritt für Schritt zu verfolgen.</div>`;
+
+    if (s === 'forward') return `
+      <span class="step-badge badge-forward">Schritt 1 · Forward Pass</span>
+      <p>Zuerst läuft die Eingabe einmal vorwärts durch das Netz: Die Verbindung wird mit dem Gewicht multipliziert, danach wird die Aktivierungsfunktion angewendet.</p>
+      <div class="formula"><span class="term x">z</span> = w · x = ${fmt(data.w)} · ${fmt(data.x)} = <strong>${fmt(data.z)}</strong></div>
+      <div class="formula"><span class="term x">ŷ</span> = σ(z) = σ(${fmt(data.z)}) = <strong>${fmt(data.a)}</strong></div>
+      <div class="callout">ŷ = ${fmt(data.a)} ist die aktuelle Vorhersage des Netzes &ndash; noch mit dem zufälligen Startgewicht w = ${fmt(data.w)}.</div>`;
+
+    if (s === 'loss') return `
+      <span class="step-badge badge-loss">Schritt 2 · Fehler berechnen</span>
+      <p>Jetzt vergleichen wir die Vorhersage ŷ mit dem Zielwert y. Der Fehler (Loss) wird mit dem quadratischen Fehler gemessen:</p>
+      <div class="formula"><span class="term l">L</span> = ½ · (ŷ − y)² = ½ · (${fmt(data.a)} − ${fmt(data.y)})² = <strong>${fmt(data.loss)}</strong></div>
+      <div class="callout">Je größer L, desto weiter liegt die Vorhersage vom Ziel entfernt. Backpropagation sucht die Richtung, in der man w ändern muss, damit L kleiner wird.</div>`;
+
+    if (s === 'chain') return `
+      <span class="step-badge badge-backward">Schritt 3 · Kettenregel</span>
+      <p>w beeinflusst L nicht direkt, sondern über eine Kette von Zwischenschritten: <span class="term x">w → z → ŷ → L</span>. Um zu wissen, wie stark eine kleine Änderung von w den Fehler L verändert, multiplizieren wir die Ableitungen entlang dieser Kette &ndash; das ist die <strong>Kettenregel</strong>:</p>
+      <div class="formula"><span class="term b">∂L/∂w</span> = <span class="term l">∂L/∂ŷ</span> · <span class="term b">∂ŷ/∂z</span> · <span class="term x">∂z/∂w</span></div>
+      <p>Die drei einzelnen Ableitungen:</p>
+      <div class="formula">∂L/∂ŷ = (ŷ − y) &nbsp;&nbsp;<small>(Ableitung des quadratischen Fehlers)</small></div>
+      <div class="formula">∂ŷ/∂z = σ(z) · (1 − σ(z)) = ŷ · (1 − ŷ) &nbsp;&nbsp;<small>(Ableitung der Sigmoid-Funktion)</small></div>
+      <div class="formula">∂z/∂w = x &nbsp;&nbsp;<small>(z = w·x, abgeleitet nach w)</small></div>`;
+
+    if (s === 'gradient') return `
+      <span class="step-badge badge-backward">Schritt 4 · Gradient berechnen</span>
+      <p>Jetzt setzen wir die berechneten Zahlen in die drei Ableitungen ein und multiplizieren sie gemäß der Kettenregel:</p>
+      <div class="formula"><span class="term l">∂L/∂ŷ</span> = ŷ − y = ${fmt(data.a)} − ${fmt(data.y)} = <strong>${fmt(data.dLda)}</strong></div>
+      <div class="formula"><span class="term b">∂ŷ/∂z</span> = ŷ · (1 − ŷ) = ${fmt(data.a)} · (1 − ${fmt(data.a)}) = <strong>${fmt(data.dadz)}</strong></div>
+      <div class="formula"><span class="term x">∂z/∂w</span> = x = <strong>${fmt(data.dzdw)}</strong></div>
+      <div class="formula"><span class="term b">∂L/∂w</span> = ${fmt(data.dLda)} · ${fmt(data.dadz)} · ${fmt(data.dzdw)} = <strong>${fmt(data.dLdw)}</strong></div>
+      <div class="callout">Der Gradient ∂L/∂w zeigt die Richtung, in der der Fehler <em>ansteigt</em>. Um den Fehler zu verringern, muss w in die <em>entgegengesetzte</em> Richtung verschoben werden.</div>`;
+
+    if (s === 'update') return `
+      <span class="step-badge badge-update">Schritt 5 · Gewicht aktualisieren</span>
+      <p>Das Gewicht wird nun ein kleines Stück entgegen dem Gradienten verschoben. Wie groß dieser Schritt ist, bestimmt die Lernrate η:</p>
+      <div class="formula"><span class="term u">w<sub>neu</sub></span> = w − η · ∂L/∂w = ${fmt(data.w)} − ${fmt(data.eta)} · ${fmt(data.dLdw)} = <strong>${fmt(data.wNew)}</strong></div>
+      <div class="callout">Mit w = ${fmt(data.wNew)} wäre die neue Vorhersage ŷ = σ(${fmt(data.wNew)} · ${fmt(data.x)}) = <strong>${fmt(sigmoid(data.wNew * data.x))}</strong> &ndash; das liegt näher am Zielwert y = ${fmt(data.y)} als vorher.</div>
+      <div class="settings-row"><button id="applyBtn">Neues Gewicht übernehmen &amp; Runde protokollieren</button></div>`;
+
+    if (s === 'summary') return `
+      <span class="step-badge badge-summary">Zusammenfassung</span>
+      <p>In einer Trainingsrunde (Epoche) läuft immer dieselbe Kette ab:</p>
+      <div class="formula">x → <span class="term x">z = w·x</span> → <span class="term x">ŷ = σ(z)</span> → <span class="term l">L = ½(ŷ−y)²</span> → <span class="term b">∂L/∂w</span> → <span class="term u">w<sub>neu</sub> = w − η·∂L/∂w</span></div>
+      <p>Dieser Ablauf wird bei größeren Netzen für <em>jedes einzelne Gewicht</em> wiederholt &ndash; nur die Kette der Ableitungen wird länger, das Prinzip der Kettenregel bleibt exakt dasselbe.</p>
+      ${state.history.length ? `<h3>Trainingsverlauf</h3><table class="history"><tr><th>Runde</th><th>w</th><th>ŷ</th><th>Loss</th></tr>${state.history.map(h => `<tr><td>${h.i}</td><td>${fmt(h.w)}</td><td>${fmt(h.a)}</td><td>${fmt(h.loss)}</td></tr>`).join('')}</table>` : '<div class="callout">Wende in Schritt 5 mehrfach „Neues Gewicht übernehmen“ an, um zu sehen, wie der Fehler von Runde zu Runde sinkt.</div>'}
+      <details><summary>Warum funktioniert das?</summary><p>Der Gradient ∂L/∂w zeigt, wie empfindlich der Fehler auf w reagiert. Bewegt man w ein kleines Stück in die Gegenrichtung des Gradienten, sinkt der Fehler garantiert (solange die Lernrate η nicht zu groß gewählt ist). Genau das nennt man <strong>Gradientenabstieg</strong>, und die Berechnung des Gradienten über die Kettenregel ist die <strong>Backpropagation</strong>.</p></details>`;
+  }
+
+  function renderAll() {
+    const data = compute();
+    renderSvg(data);
+    renderStepper();
+    contentEl.innerHTML = stepContent(data);
+    prevBtn.disabled = state.step === 0;
+    nextBtn.textContent = state.step === steps.length - 1 ? 'Von vorn' : 'Weiter →';
+    const applyBtn = document.getElementById('applyBtn');
+    if (applyBtn) applyBtn.addEventListener('click', () => {
+      state.history.push({ i: state.history.length + 1, w: data.wNew, a: sigmoid(data.wNew * data.x), loss: 0.5 * (sigmoid(data.wNew * data.x) - data.y) ** 2 });
+      state.w = data.wNew;
+      state.step = 1;
+      renderAll();
+    });
+  }
+
+  prevBtn.addEventListener('click', () => { if (state.step > 0) { state.step--; renderAll(); } });
+  nextBtn.addEventListener('click', () => { state.step = state.step === steps.length - 1 ? 0 : state.step + 1; renderAll(); });
+
+  ['xInput', 'wInput', 'yInput', 'etaInput'].forEach(id => {
+    document.getElementById(id).addEventListener('input', e => {
+      const key = { xInput: 'x', wInput: 'w', yInput: 'y', etaInput: 'eta' }[id];
+      state[key] = Number(e.target.value) || 0;
+      renderAll();
+    });
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    state.x = 2; state.w = 0.3; state.y = 0.9; state.eta = 0.3; state.step = 0; state.history = [];
+    document.getElementById('xInput').value = 2;
+    document.getElementById('wInput').value = 0.3;
+    document.getElementById('yInput').value = 0.9;
+    document.getElementById('etaInput').value = 0.3;
+    renderAll();
+  });
+
+  renderAll();
+</script>
+</body>
+</html>
