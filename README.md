@@ -66,3 +66,5 @@ Sie kann direkt im Browser geöffnet werden.
 Für eine interaktive Visualisierung von Forward Pass, quadratischem Fehler, Kettenregel-Backpropagation und Gewichtsupdate in einem linearen neuronalen Netz gibt es die Datei `backpropagation-linear.html`.
 Sie kann ebenfalls direkt im Browser geöffnet werden.
 
+Für einen interaktiven zweiseitigen Binomialtest mit einstellbarer Erfolgswahrscheinlichkeit p₀, Signifikanzniveau α und Stichprobenumfang n gibt es die Datei `hypothesentest-zweiseitig.html`.
+Sie zeigt Annahme- und Ablehnungsbereich, die tatsächliche Irrtumswahrscheinlichkeit und optional den Fehler 2. Art für ein wahres p.
