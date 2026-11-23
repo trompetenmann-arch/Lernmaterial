@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deckungsgleich</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: Kopfzeile mit Punktestand, darunter das Karopapier-Spielfeld (1 Kästchen = 1 cm), Bedienleiste und Merkkasten */
+:root {
+  --paper: #f5f7fb;
+  --board: #ffffff;
+  --grid: #dce4ef;
+  --grid-strong: #c4d0e1;
+  --ink: #18233b;
+  --muted: #56627c;
+  --line: #d3dbe7;
+  --accent: #2d55c8;
+  --good: #198a4f;
+  --good-soft: #dcf3e6;
+  --bad: #c93434;
+  --bad-soft: #fbe3e3;
+  --t0: #2a9d8f; --t0e: #1d6f65;
+  --t1: #eaa337; --t1e: #a96f14;
+  --t2: #7b5cd6; --t2e: #5236a6;
+  --t3: #e56b4f; --t3e: #a8432c;
+  --t4: #3a86c8; --t4e: #225f94;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #10161f; --board: #151d29; --grid: #1f2b3b; --grid-strong: #2a394d;
+    --ink: #e6ecf5; --muted: #9aa8bf; --line: #2a3648; --accent: #7d9cf5;
+    --good: #45c483; --good-soft: #163526; --bad: #f06a6a; --bad-soft: #3a1c1f;
+    --t0: #35b3a4; --t0e: #8ee3d8; --t1: #f0b24f; --t1e: #ffdca0;
+    --t2: #9278ea; --t2e: #cdbdff; --t3: #ef7f63; --t3e: #ffc1b1;
+    --t4: #4f9be0; --t4e: #b0d6ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #10161f; --board: #151d29; --grid: #1f2b3b; --grid-strong: #2a394d;
+  --ink: #e6ecf5; --muted: #9aa8bf; --line: #2a3648; --accent: #7d9cf5;
+  --good: #45c483; --good-soft: #163526; --bad: #f06a6a; --bad-soft: #3a1c1f;
+  --t0: #35b3a4; --t0e: #8ee3d8; --t1: #f0b24f; --t1e: #ffdca0;
+  --t2: #9278ea; --t2e: #cdbdff; --t3: #ef7f63; --t3e: #ffc1b1;
+  --t4: #4f9be0; --t4e: #b0d6ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.app {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-block: 20px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 16px;
+}
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+.brand { min-width: 0; max-width: 34rem; }
+h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 4.5vw, 2.6rem);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0 0 6px;
+  text-wrap: balance;
+}
+h1 .tri-mark { color: var(--accent); }
+.lede { margin: 0; color: var(--muted); }
+.score { display: flex; gap: 8px; }
+.stat {
+  display: grid;
+  justify-items: center;
+  min-width: 82px;
+  padding: 6px 12px 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--board);
+}
+.stat .label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.stat .val {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.6rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.stat.points .val { color: var(--good); }
+.stat .val.bump { animation: bump .5s ease; }
+@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
+
+.board-wrap {
+  position: relative;
+  border: 1px solid var(--grid-strong);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--board);
+}
+#board { display: block; width: 100%; height: auto; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.gridline { stroke: var(--grid); stroke-width: 1; }
+#tris { transition: opacity .35s ease; }
+#tris.fading { opacity: 0; }
+
+.tri { cursor: pointer; outline: none; }
+.tri polygon {
+  fill: var(--c);
+  fill-opacity: .82;
+  stroke: var(--ce);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  transition: fill-opacity .25s ease;
+}
+.tri:hover polygon { fill-opacity: .95; }
+.tri:focus-visible polygon { stroke: var(--accent); stroke-width: 6; }
+.tri.selected polygon {
+  stroke: var(--ink);
+  stroke-width: 5;
+  stroke-dasharray: 12 8;
+  animation: march .9s linear infinite;
+}
+.tri.target polygon { stroke: var(--ink); stroke-width: 5; }
+.tri.moving polygon { fill-opacity: .55; stroke-dasharray: none; animation: none; }
+.tri.match polygon { stroke: var(--good); stroke-width: 6; stroke-dasharray: none; animation: glow .6s ease 2; }
+.tri.miss polygon { stroke: var(--bad); stroke-width: 6; stroke-dasharray: none; animation: none; }
+.tri.reveal polygon { stroke: var(--good); stroke-width: 6; animation: glow .7s ease 2; }
+@keyframes march { to { stroke-dashoffset: -40; } }
+@keyframes glow { 50% { stroke-width: 12; } }
+.c0 { --c: var(--t0); --ce: var(--t0e); }
+.c1 { --c: var(--t1); --ce: var(--t1e); }
+.c2 { --c: var(--t2); --ce: var(--t2e); }
+.c3 { --c: var(--t3); --ce: var(--t3e); }
+.c4 { --c: var(--t4); --ce: var(--t4e); }
+.meas {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 17px;
+  fill: var(--ink);
+  stroke: var(--board);
+  stroke-width: 5px;
+  paint-order: stroke;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+.meas-hidden .meas { display: none; }
+.num circle { fill: var(--board); stroke: var(--ce); stroke-width: 2.5; }
+.num text {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 19px;
+  fill: var(--ink);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.num { pointer-events: none; }
+.tri.moving .meas, .tri.target .meas.hideOnTarget { display: none; }
+.spark { pointer-events: none; }
+.plus {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 54px;
+  fill: var(--good);
+  stroke: var(--board);
+  stroke-width: 6px;
+  paint-order: stroke;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--board);
+  font-weight: 700;
+}
+.status::before {
+  content: "";
+  flex: none;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.status.good { background: var(--good-soft); color: var(--good); }
+.status.good::before { background: var(--good); }
+.status.bad { background: var(--bad-soft); color: var(--bad); }
+.status.bad::before { background: var(--bad); }
+.board-wrap.shake { animation: shake .45s ease; }
+@keyframes shake {
+  20% { transform: translateX(-8px); } 40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); } 80% { transform: translateX(3px); }
+}
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px; }
+button {
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--board);
+  border: 1px solid var(--grid-strong);
+  border-radius: 999px;
+  padding: 9px 18px;
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--board); }
+button.primary { margin-left: auto; }
+.levels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.levels .label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 700;
+}
+.seg {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid var(--grid-strong);
+  border-radius: 999px;
+  background: var(--board);
+}
+.seg button { border: 0; padding: 7px 16px; background: transparent; }
+.seg button[aria-checked="true"] { background: var(--ink); color: var(--board); }
+.seg button .dots { letter-spacing: 1px; margin-left: 6px; opacity: .7; font-size: .8em; }
+.level-hint { color: var(--muted); font-size: .95rem; min-width: 0; flex: 1 1 220px; }
+
+.theory {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 20px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px dashed var(--grid-strong);
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.theory h2 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+.theory p { margin: 0; min-width: 0; }
+.theory b { color: var(--ink); font-family: var(--font-display); letter-spacing: 0.04em; }
+
+@media (max-width: 560px) {
+  header { align-items: stretch; }
+  .score { width: 100%; }
+  .stat { flex: 1; min-width: 0; }
+  button.primary { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tri.selected polygon, .tri.match polygon, .tri.reveal polygon, .board-wrap.shake, .stat .val.bump { animation: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <h1>Deckungs&shy;gleich<span class="tri-mark">.</span></h1>
+      <p class="lede">Genau zwei der fünf Dreiecke sind kongruent. Tippe zwei an: Das erste wird verschoben, gedreht und, wenn nötig, gespiegelt, bis es auf dem zweiten liegt.</p>
+    </div>
+    <div class="score" aria-label="Spielstand">
+      <div class="stat points"><span class="label">Punkte</span><span class="val" id="points">0</span></div>
+      <div class="stat"><span class="label">Serie</span><span class="val" id="streak">0</span></div>
+      <div class="stat"><span class="label">Fehlversuche</span><span class="val" id="misses">0</span></div>
+    </div>
+  </header>
+
+  <div class="levels">
+    <span class="label" id="levelLabel">Schwierigkeit</span>
+    <div class="seg" role="radiogroup" aria-labelledby="levelLabel">
+      <button type="button" role="radio" id="lvl-leicht" data-level="leicht" aria-checked="false">Leicht<span class="dots" aria-hidden="true">▲</span></button>
+      <button type="button" role="radio" id="lvl-mittel" data-level="mittel" aria-checked="true">Mittel<span class="dots" aria-hidden="true">▲▲</span></button>
+      <button type="button" role="radio" id="lvl-schwer" data-level="schwer" aria-checked="false">Schwer<span class="dots" aria-hidden="true">▲▲▲</span></button>
+    </div>
+    <span class="level-hint" id="levelHint"></span>
+  </div>
+
+  <div class="board-wrap" id="wrap">
+    <svg id="board" viewBox="0 0 960 600" aria-label="Spielfeld mit fünf Dreiecken" class="meas-hidden">
+      <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M40 0H0V40" class="gridline" fill="none"></path>
+        </pattern>
+      </defs>
+      <rect id="gridbg" x="0" y="0" width="960" height="600" fill="url(#grid)"></rect>
+      <g id="tris"></g>
+      <g id="fx"></g>
+    </svg>
+    <div class="status" id="status" aria-live="polite">Wähle das erste Dreieck.</div>
+  </div>
+
+  <div class="controls">
+    <button id="btnMeasure" type="button" aria-pressed="false">Seitenlängen anzeigen</button>
+    <button id="btnSound" type="button" aria-pressed="true">Ton an</button>
+    <button id="btnSkip" type="button" class="primary">Lösung zeigen &amp; neue Aufgabe</button>
+  </div>
+
+  <aside class="theory">
+    <h2>Kongruenzsätze für Dreiecke</h2>
+    <p><b>SSS</b> Alle drei Seiten stimmen überein.</p>
+    <p><b>SWS</b> Zwei Seiten und der eingeschlossene Winkel stimmen überein.</p>
+    <p><b>WSW</b> Eine Seite und die beiden anliegenden Winkel stimmen überein.</p>
+    <p><b>SsW</b> Zwei Seiten und der Winkel gegenüber der längeren Seite stimmen überein.</p>
+    <p>Kongruente Dreiecke lassen sich durch Verschieben, Drehen und Spiegeln zur Deckung bringen. Ein Kästchen entspricht 1&nbsp;cm.</p>
+  </aside>
+</div>
+
+<script>
+(() => {
+  const NS = "http://www.w3.org/2000/svg";
+  const board = document.getElementById("board");
+  const trisG = document.getElementById("tris");
+  const fxG = document.getElementById("fx");
+  const gridbg = document.getElementById("gridbg");
+  const wrap = document.getElementById("wrap");
+  const statusEl = document.getElementById("status");
+  const elPoints = document.getElementById("points");
+  const elStreak = document.getElementById("streak");
+  const elMisses = document.getElementById("misses");
+  const btnMeasure = document.getElementById("btnMeasure");
+  const btnSound = document.getElementById("btnSound");
+  const btnSkip = document.getElementById("btnSkip");
+
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const DEG = Math.PI / 180;
+  const UNIT = 40; // 40 Einheiten = 1 cm (ein Kästchen)
+
+  const score = { points: 0, streak: 0, misses: 0 };
+  // Schwierigkeitsstufen: wie stark sich die falschen Dreiecke vom gesuchten Paar unterscheiden
+  const LEVELS = {
+    leicht: {
+      hint: "Die falschen Dreiecke unterscheiden sich deutlich. Nur Verschieben und Drehen, kein Spiegeln.",
+      minDiff: 30, mirror: false,
+      types: ["random", "random", "similar", "similar", "side"],
+      similar: [0.7, 0.75, 1.25], angle: [26, 36], side: [1.25, 1.35, 0.68, 0.76], wswAngle: [22, 30]
+    },
+    mittel: {
+      hint: "Die falschen Dreiecke stimmen teilweise mit dem Paar überein. Manchmal muss gespiegelt werden.",
+      minDiff: 12, mirror: true,
+      types: ["similar", "sws", "side", "wsw", "sws", "side", "random"],
+      similar: [0.78, 0.83, 1.16, 1.2], angle: [14, 24], side: [1.14, 1.24, 0.78, 0.87], wswAngle: [10, 18]
+    },
+    schwer: {
+      hint: "Die falschen Dreiecke weichen nur um wenige Millimeter oder Grad ab. Genau hinsehen oder messen!",
+      minDiff: 5, maxDiff: 16, mirror: true,
+      types: ["sws", "side", "wsw", "sws", "side", "wsw", "similar"],
+      similar: [0.9, 0.92, 1.08, 1.1], angle: [5, 9], side: [1.05, 1.1, 0.9, 0.95], wswAngle: [4, 8]
+    }
+  };
+  let level = "mittel";
+  try { const saved = localStorage.getItem("deckungsgleich-level"); if (LEVELS[saved]) level = saved; } catch (e) {}
+  let tris = [];
+  let selected = null;
+  let busy = false;
+  let slots = [];
+  let audio = null;
+  let soundOn = true;
+
+  // ---------- Geometrie ----------
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function centered(P) {
+    const cx = (P[0][0] + P[1][0] + P[2][0]) / 3;
+    const cy = (P[0][1] + P[1][1] + P[2][1]) / 3;
+    return P.map(p => [p[0] - cx, p[1] - cy]);
+  }
+  // s[i] liegt dem Eckpunkt i gegenüber
+  const sides = (p) => [dist(p[1], p[2]), dist(p[2], p[0]), dist(p[0], p[1])];
+  function angles(p) {
+    const [a, b, c] = sides(p);
+    const A = Math.acos(Math.min(1, Math.max(-1, (b * b + c * c - a * a) / (2 * b * c))));
+    const B = Math.acos(Math.min(1, Math.max(-1, (a * a + c * c - b * b) / (2 * a * c))));
+    return [A, B, Math.PI - A - B];
+  }
+  // Zwei Seiten s1, s2 mit eingeschlossenem Winkel g
+  const sws = (s1, s2, g) => centered([[0, 0], [s1, 0], [s2 * Math.cos(g), -s2 * Math.sin(g)]]);
+  function sss(a, b, c) {
+    const x = (b * b + c * c - a * a) / (2 * c);
+    const h2 = b * b - x * x;
+    if (!(h2 > 1)) return null;
+    return centered([[0, 0], [c, 0], [x, -Math.sqrt(h2)]]);
+  }
+  function valid(p) {
+    if (!p) return false;
+    if (Math.min(...angles(p)) < 24 * DEG) return false;
+    if (Math.max(...p.map(q => Math.hypot(q[0], q[1]))) > 122) return false;
+    if (Math.max(...sides(p)) < 100) return false;
+    return true;
+  }
+  function shapeDiff(p, q) {
+    const a = sides(p).sort((x, y) => x - y);
+    const b = sides(q).sort((x, y) => x - y);
+    return Math.max(...a.map((v, i) => Math.abs(v - b[i])));
+  }
+  function makeBase() {
+    for (let k = 0; k < 500; k++) {
+      const al = rand(40, 92) * DEG;
+      const be = rand(34, 180 - al / DEG - 30) * DEG;
+      const ga = Math.PI - al - be;
+      const c = rand(130, 180);
+      const b = c * Math.sin(be) / Math.sin(ga);
+      const p = sws(c, b, al);
+      if (valid(p)) return p;
+    }
+    return sws(150, 130, 60 * DEG);
+  }
+  function makeDistractor(base, type, L) {
+    const s = sides(base);
+    const A = angles(base);
+    const i = Math.floor(Math.random() * 3);
+    const j = (i + 1) % 3, k = (i + 2) % 3;
+    const sign = Math.random() < 0.5 ? -1 : 1;
+    switch (type) {
+      case "similar": { // gleiche Winkel, andere Größe
+        const f = pick(L.similar);
+        return sss(s[0] * f, s[1] * f, s[2] * f);
+      }
+      case "sws": { // zwei Seiten gleich, eingeschlossener Winkel anders
+        return sws(s[k], s[j], A[i] + sign * rand(L.angle[0], L.angle[1]) * DEG);
+      }
+      case "side": { // zwei Seiten gleich, dritte anders
+        const t = s.slice();
+        t[i] *= sign > 0 ? rand(L.side[0], L.side[1]) : rand(L.side[2], L.side[3]);
+        return sss(t[0], t[1], t[2]);
+      }
+      case "wsw": { // eine Seite gleich, ein anliegender Winkel anders
+        const len = s[i];
+        const tj = A[j] + sign * rand(L.wswAngle[0], L.wswAngle[1]) * DEG;
+        const tk = A[k];
+        const ti = Math.PI - tj - tk;
+        if (ti <= 0.2) return null;
+        return sws(len, len * Math.sin(tk) / Math.sin(ti), tj);
+      }
+      default:
+        return makeBase();
+    }
+  }
+
+  // Beste Lage von Dreieck A auf Dreieck B (Verschiebung, Drehung, ggf. Spiegelung)
+  const PERMS = [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+  function fit(A, B) {
+    const wB = worldPts(B);
+    let best = null;
+    for (const f of [1, -1]) {
+      for (const perm of PERMS) {
+        let sd = 0, sc = 0;
+        const qs = A.pts.map(p => [f * p[0], p[1]]);
+        const bs = perm.map(ix => [wB[ix][0] - B.pose.x, wB[ix][1] - B.pose.y]);
+        for (let n = 0; n < 3; n++) {
+          sd += qs[n][0] * bs[n][0] + qs[n][1] * bs[n][1];
+          sc += qs[n][0] * bs[n][1] - qs[n][1] * bs[n][0];
+        }
+        const th = Math.atan2(sc, sd);
+        const c = Math.cos(th), s = Math.sin(th);
+        let err = 0;
+        for (let n = 0; n < 3; n++) {
+          const rx = c * qs[n][0] - s * qs[n][1], ry = s * qs[n][0] + c * qs[n][1];
+          err += (rx - bs[n][0]) ** 2 + (ry - bs[n][1]) ** 2;
+        }
+        // kleine Vorliebe für "ohne Spiegeln", wenn beides gleich gut passt
+        const score = err + (f === A.pose.f ? 0 : 1e-3);
+        if (!best || score < best.score) best = { score, x: B.pose.x, y: B.pose.y, th, f };
+      }
+    }
+    return best;
+  }
+
+  // ---------- Darstellung ----------
+  function worldPts(T) {
+    const { x, y, th, f } = T.pose;
+    const c = Math.cos(th), s = Math.sin(th);
+    return T.pts.map(p => {
+      const px = f * p[0], py = p[1];
+      return [x + c * px - s * py, y + s * px + c * py];
+    });
+  }
+  const fmt = (v) => (v / UNIT).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  function draw(T) {
+    const w = worldPts(T);
+    T.poly.setAttribute("points", w.map(p => p[0].toFixed(2) + "," + p[1].toFixed(2)).join(" "));
+    const cx = (w[0][0] + w[1][0] + w[2][0]) / 3, cy = (w[0][1] + w[1][1] + w[2][1]) / 3;
+    for (let e = 0; e < 3; e++) {
+      const p = w[(e + 1) % 3], q = w[(e + 2) % 3];
+      const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2;
+      let nx = mx - cx, ny = my - cy;
+      const len = Math.hypot(nx, ny) || 1;
+      T.labels[e].setAttribute("x", (mx + nx / len * 17).toFixed(1));
+      T.labels[e].setAttribute("y", (my + ny / len * 17).toFixed(1));
+    }
+    T.num.setAttribute("transform", `translate(${cx.toFixed(1)} ${cy.toFixed(1)})`);
+  }
+  function computeSlots() {
+    const portrait = wrap.clientWidth < 620;
+    const W = portrait ? 600 : 960, H = portrait ? 920 : 600;
+    board.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    gridbg.setAttribute("width", W);
+    gridbg.setAttribute("height", H);
+    slots = portrait
+      ? [[150, 160], [450, 160], [150, 460], [450, 460], [300, 760]]
+      : [[165, 160], [480, 160], [795, 160], [322, 440], [638, 440]];
+  }
+  function layoutTris() {
+    tris.forEach(T => {
+      T.home.x = slots[T.slot][0];
+      T.home.y = slots[T.slot][1];
+      if (!busy) { T.pose = { ...T.home }; draw(T); }
+    });
+  }
+
+  // Gerundete Seitenlängen müssen sich unterscheiden, sonst wäre die Messhilfe irreführend
+  const labelKey = (p) => sides(p).sort((x, y) => x - y).map(fmt).join("|");
+  function newRound() {
+    const L = LEVELS[level];
+    let base, ds;
+    for (let attempt = 0; attempt < 400; attempt++) {
+      base = makeBase();
+      ds = [];
+      const types = shuffle(L.types.slice());
+      for (const t of types) {
+        if (ds.length === 3) break;
+        const d = makeDistractor(base, t, L);
+        if (!valid(d)) continue;
+        if (L.maxDiff && t !== "random" && shapeDiff(base, d) > L.maxDiff) continue;
+        if ([base, ...ds].every(o => shapeDiff(o, d) >= L.minDiff && labelKey(o) !== labelKey(d))) ds.push(d);
+      }
+      if (ds.length === 3) break;
+    }
+    const shapes = [base, base.map(p => p.slice()), ...ds];
+    const slotOrder = shuffle([0, 1, 2, 3, 4]);
+    const colors = shuffle([0, 1, 2, 3, 4]);
+
+    trisG.innerHTML = "";
+    fxG.innerHTML = "";
+    tris = shapes.map((pts, n) => {
+      const g = document.createElementNS(NS, "g");
+      g.setAttribute("class", "tri c" + colors[n]);
+      g.setAttribute("tabindex", "0");
+      g.setAttribute("role", "button");
+      const poly = document.createElementNS(NS, "polygon");
+      g.appendChild(poly);
+      const labels = sides(pts).map(len => {
+        const t = document.createElementNS(NS, "text");
+        t.setAttribute("class", "meas");
+        t.textContent = fmt(len);
+        g.appendChild(t);
+        return t;
+      });
+      const slot = slotOrder[n];
+      const num = document.createElementNS(NS, "g");
+      num.setAttribute("class", "num");
+      num.innerHTML = `<circle r="15"></circle><text>${slot + 1}</text>`;
+      g.appendChild(num);
+      const home = { x: slots[slot][0], y: slots[slot][1], th: rand(0, 2 * Math.PI), f: (L.mirror && Math.random() < 0.5) ? -1 : 1 };
+      const T = { id: n, nr: slot + 1, pts, g, poly, labels, num, slot, home, pose: { ...home }, twin: n < 2 };
+      g.addEventListener("click", () => onPick(T));
+      g.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onPick(T); }
+      });
+      trisG.appendChild(g);
+      return T;
+    });
+    // Die Zwillinge sollen nicht schon gleich ausgerichtet aussehen
+    const [a, b] = tris;
+    let dth = Math.abs(((a.home.th - b.home.th) % (2 * Math.PI) + 3 * Math.PI) % (2 * Math.PI) - Math.PI);
+    if (a.home.f === b.home.f && dth < 50 * DEG) b.home.th += rand(70, 160) * DEG;
+    // Reihenfolge im DOM entspricht den Plätzen, damit die Tab-Reihenfolge stimmt
+    tris.slice().sort((p, q) => p.slot - q.slot).forEach(T => {
+      trisG.appendChild(T.g);
+      T.g.setAttribute("aria-label", "Dreieck " + T.nr);
+    });
+    tris.forEach(T => { T.pose = { ...T.home }; draw(T); });
+    selected = null;
+    setStatus("Wähle das erste Dreieck.");
+  }
+
+  // ---------- Animation ----------
+  const ease = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const wait = (ms) => new Promise(r => setTimeout(r, reduced ? Math.min(ms, 300) : ms));
+  function animate(T, to, ms) {
+    const from = { ...T.pose };
+    const dur = reduced ? Math.min(ms, 120) : ms;
+    return new Promise(resolve => {
+      const t0 = performance.now();
+      function step(now) {
+        const t = Math.min(1, (now - t0) / dur);
+        const e = ease(t);
+        for (const key in to) T.pose[key] = from[key] + (to[key] - from[key]) * e;
+        draw(T);
+        if (t < 1) requestAnimationFrame(step); else resolve();
+      }
+      requestAnimationFrame(step);
+    });
+  }
+  const shortest = (d) => Math.atan2(Math.sin(d), Math.cos(d));
+
+  function setStatus(text, kind) {
+    statusEl.textContent = text;
+    statusEl.className = "status" + (kind ? " " + kind : "");
+  }
+  function renderScore(bumpEl) {
+    elPoints.textContent = score.points;
+    elStreak.textContent = score.streak;
+    elMisses.textContent = score.misses;
+    if (bumpEl) {
+      bumpEl.classList.remove("bump");
+      void bumpEl.offsetWidth;
+      bumpEl.classList.add("bump");
+    }
+  }
+
+  function onPick(T) {
+    if (busy) return;
+    ensureAudio();
+    if (selected === null) {
+      selected = T;
+      T.g.classList.add("selected");
+      setStatus(`Dreieck ${T.nr} gewählt. Wähle jetzt das Dreieck, auf das es gelegt werden soll.`);
+      return;
+    }
+    if (selected === T) {
+      T.g.classList.remove("selected");
+      selected = null;
+      setStatus("Auswahl aufgehoben. Wähle das erste Dreieck.");
+      return;
+    }
+    const A = selected;
+    selected = null;
+    tryMatch(A, T);
+  }
+
+  async function tryMatch(A, B) {
+    busy = true;
+    A.g.classList.remove("selected");
+    A.g.classList.add("moving");
+    B.g.classList.add("target");
+    trisG.appendChild(A.g); // nach oben holen
+    const start = { ...A.pose };
+    const target = fit(A, B);
+
+    setStatus(`Dreieck ${A.nr} auf Dreieck ${B.nr}: Verschieben …`);
+    await animate(A, { x: target.x, y: target.y }, 750);
+
+    const dth = shortest(target.th - A.pose.th);
+    if (Math.abs(dth) > 2 * DEG) {
+      setStatus(`Drehen um ${Math.round(Math.abs(dth) / DEG)}° ${dth > 0 ? "im Uhrzeigersinn" : "gegen den Uhrzeigersinn"} …`);
+      await animate(A, { th: A.pose.th + dth }, 800);
+    }
+    if (target.f !== A.pose.f) {
+      setStatus("Spiegeln …");
+      await animate(A, { f: target.f }, 700);
+    }
+    A.pose.th = target.th;
+    A.pose.f = target.f;
+    draw(A);
+
+    if (A.twin && B.twin) {
+      A.g.classList.add("match");
+      B.g.classList.add("match");
+      score.points += 1;
+      score.streak += 1;
+      renderScore(elPoints);
+      setStatus(score.streak > 1
+        ? `Deckungsgleich! Dreieck ${A.nr} und ${B.nr} sind kongruent. ${score.streak} richtig in Folge.`
+        : `Deckungsgleich! Dreieck ${A.nr} und ${B.nr} sind kongruent.`, "good");
+      chime();
+      celebrate(target.x, target.y, A);
+      await wait(1900);
+      trisG.classList.add("fading");
+      await wait(380);
+      newRound();
+      trisG.classList.remove("fading");
+      busy = false;
+    } else {
+      A.g.classList.add("miss");
+      B.g.classList.add("miss");
+      score.misses += 1;
+      score.streak = 0;
+      renderScore(elMisses);
+      setStatus(`Nicht deckungsgleich. Dreieck ${A.nr} und ${B.nr} sind nicht kongruent.`, "bad");
+      buzz();
+      wrap.classList.remove("shake");
+      void wrap.offsetWidth;
+      if (!reduced) wrap.classList.add("shake");
+      await wait(1300);
+      A.g.classList.remove("miss");
+      B.g.classList.remove("miss");
+      B.g.classList.remove("target");
+      const backTh = A.pose.th + shortest(start.th - A.pose.th);
+      await animate(A, { x: start.x, y: start.y, th: backTh, f: start.f }, 800);
+      A.pose = { ...A.home };
+      draw(A);
+      A.g.classList.remove("moving");
+      wrap.classList.remove("shake");
+      setStatus("Zurück auf Anfang. Versuch ein anderes Paar.");
+      busy = false;
+    }
+  }
+
+  function celebrate(x, y, T) {
+    const color = getComputedStyle(T.g).getPropertyValue("--c");
+    const pal = ["--t0", "--t1", "--t2", "--t3", "--t4"].map(v => getComputedStyle(document.documentElement).getPropertyValue(v).trim());
+    const parts = [];
+    const n = reduced ? 0 : 26;
+    for (let i = 0; i < n; i++) {
+      const el = document.createElementNS(NS, "polygon");
+      const r = rand(6, 12);
+      el.setAttribute("points", `0,${-r} ${r * 0.87},${r / 2} ${-r * 0.87},${r / 2}`);
+      el.setAttribute("class", "spark");
+      el.setAttribute("fill", pal[i % pal.length] || color);
+      fxG.appendChild(el);
+      const a = rand(0, 2 * Math.PI), v = rand(4, 10);
+      parts.push({ el, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 4, rot: rand(0, 360), vr: rand(-12, 12) });
+    }
+    const plus = document.createElementNS(NS, "text");
+    plus.setAttribute("class", "plus");
+    plus.setAttribute("x", x);
+    plus.setAttribute("y", y);
+    plus.textContent = "+1";
+    fxG.appendChild(plus);
+    const t0 = performance.now();
+    (function frame(now) {
+      const t = (now - t0) / 1100;
+      for (const p of parts) {
+        p.vy += 0.32; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        p.el.setAttribute("transform", `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${p.rot.toFixed(0)})`);
+        p.el.setAttribute("opacity", Math.max(0, 1 - t).toFixed(2));
+      }
+      plus.setAttribute("y", (y - 10 - 60 * Math.min(1, t)).toFixed(1));
+      plus.setAttribute("opacity", Math.max(0, 1 - Math.max(0, t - 0.4) / 0.6).toFixed(2));
+      if (t < 1) requestAnimationFrame(frame); else fxG.innerHTML = "";
+    })(t0);
+  }
+
+  // ---------- Ton ----------
+  function ensureAudio() {
+    try {
+      if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === "suspended") audio.resume();
+    } catch (e) { audio = null; }
+  }
+  function buzz() {
+    if (!soundOn || !audio) return;
+    const t = audio.currentTime;
+    const g = audio.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.28, t + 0.02);
+    g.gain.setValueAtTime(0.28, t + 0.5);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+    const lp = audio.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 1000;
+    lp.connect(g);
+    g.connect(audio.destination);
+    [92, 98, 185].forEach(f => {
+      const o = audio.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.value = f;
+      o.connect(lp);
+      o.start(t);
+      o.stop(t + 0.72);
+    });
+  }
+  function chime() {
+    if (!soundOn || !audio) return;
+    const t = audio.currentTime;
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      const o = audio.createOscillator();
+      const g = audio.createGain();
+      o.type = "triangle";
+      o.frequency.value = f;
+      const s = t + i * 0.09;
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(0.22, s + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + (i === 3 ? 0.7 : 0.3));
+      o.connect(g);
+      g.connect(audio.destination);
+      o.start(s);
+      o.stop(s + 0.75);
+    });
+  }
+
+  // ---------- Bedienelemente ----------
+  btnMeasure.addEventListener("click", () => {
+    const on = btnMeasure.getAttribute("aria-pressed") !== "true";
+    btnMeasure.setAttribute("aria-pressed", String(on));
+    board.classList.toggle("meas-hidden", !on);
+    btnMeasure.textContent = on ? "Seitenlängen ausblenden" : "Seitenlängen anzeigen";
+  });
+  btnSound.addEventListener("click", () => {
+    soundOn = !soundOn;
+    btnSound.setAttribute("aria-pressed", String(soundOn));
+    btnSound.textContent = soundOn ? "Ton an" : "Ton aus";
+    if (soundOn) ensureAudio();
+  });
+  btnSkip.addEventListener("click", async () => {
+    if (busy) return;
+    busy = true;
+    if (selected) { selected.g.classList.remove("selected"); selected = null; }
+    tris.filter(T => T.twin).forEach(T => T.g.classList.add("reveal"));
+    score.streak = 0;
+    renderScore();
+    const tw = tris.filter(T => T.twin).map(T => T.nr).sort();
+    setStatus(`Dreieck ${tw[0]} und ${tw[1]} wären kongruent gewesen.`, "good");
+    await wait(1800);
+    trisG.classList.add("fading");
+    await wait(380);
+    newRound();
+    trisG.classList.remove("fading");
+    busy = false;
+  });
+
+  const levelBtns = Array.from(document.querySelectorAll(".seg button"));
+  const levelHint = document.getElementById("levelHint");
+  function showLevel() {
+    levelBtns.forEach(b => {
+      const on = b.dataset.level === level;
+      b.setAttribute("aria-checked", String(on));
+      b.tabIndex = on ? 0 : -1;
+    });
+    levelHint.textContent = LEVELS[level].hint;
+  }
+  function setLevel(next) {
+    if (busy || next === level || !LEVELS[next]) return;
+    level = next;
+    try { localStorage.setItem("deckungsgleich-level", level); } catch (e) {}
+    score.streak = 0;
+    renderScore();
+    showLevel();
+    newRound();
+    setStatus("Stufe „" + level.charAt(0).toUpperCase() + level.slice(1) + "“. Wähle das erste Dreieck.");
+  }
+  levelBtns.forEach((b, idx) => {
+    b.addEventListener("click", () => setLevel(b.dataset.level));
+    b.addEventListener("keydown", (ev) => {
+      const dir = ev.key === "ArrowRight" || ev.key === "ArrowDown" ? 1 : ev.key === "ArrowLeft" || ev.key === "ArrowUp" ? -1 : 0;
+      if (!dir) return;
+      ev.preventDefault();
+      const nb = levelBtns[(idx + dir + levelBtns.length) % levelBtns.length];
+      setLevel(nb.dataset.level);
+      nb.focus();
+    });
+  });
+
+  let lastPortrait = null;
+  window.addEventListener("resize", () => {
+    const portrait = wrap.clientWidth < 620;
+    if (portrait === lastPortrait || busy) return;
+    lastPortrait = portrait;
+    computeSlots();
+    layoutTris();
+  });
+
+  function start(data) {
+    if (data && data.score) Object.assign(score, data.score);
+    if (data && LEVELS[data.level]) level = data.level;
+    showLevel();
+    renderScore();
+    computeSlots();
+    lastPortrait = wrap.clientWidth < 620;
+    newRound();
+  }
+  window.claude?.hot?.snapshot?.(() => ({ score: { ...score }, level }));
+  window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
+</body>
+</html>

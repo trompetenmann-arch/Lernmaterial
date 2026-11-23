@@ -66,3 +66,5 @@ Sie kann direkt im Browser geöffnet werden.
 Für eine interaktive Visualisierung von Forward Pass, quadratischem Fehler, Kettenregel-Backpropagation und Gewichtsupdate in einem linearen neuronalen Netz gibt es die Datei `backpropagation-linear.html`.
 Sie kann ebenfalls direkt im Browser geöffnet werden.
 
+Für das Thema Kongruenz gibt es das Lernspiel `kongruente-dreiecke.html` („Deckungsgleich“): Von fünf Dreiecken sind genau zwei kongruent.
+Wählt man zwei Dreiecke aus, wird das erste per Animation verschoben, gedreht und ggf. gespiegelt und auf das zweite gelegt. Es gibt drei Schwierigkeitsstufen und eine einblendbare Messhilfe.
