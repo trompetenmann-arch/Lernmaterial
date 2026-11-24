@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mehr als ein Ganzes?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Lexend:wght@400;500;600&display=swap">
+<style>
+/* Layout: Karopapier als Grund (dunkel: Schultafel), darauf eine Aufgabenkarte.
+   Ablauf je Aufgabe: Brüche sehen -> Zeichen wählen -> Kreisanteile -> Stempel. */
+:root {
+  --paper: #F3F6FA;
+  --grid: #DCE5F0;
+  --card: #FFFFFF;
+  --ink: #1B2440;
+  --ink-soft: #586382;
+  --line: #CDD7E5;
+  --a: #EF9415;
+  --b: #3A6CDE;
+  --good: #14804D;
+  --good-soft: #DFF3E7;
+  --bad: #C2334C;
+  --bad-soft: #FBE3E7;
+  --key: #1B2440;
+  --key-fg: #FFFFFF;
+  --key-edge: #070B1A;
+  --focus: #3A6CDE;
+  --hatch-bg: #F1F4F9;
+  --hatch-line: #C9D3E2;
+  --shadow: 0 18px 40px -24px rgba(27, 36, 64, .45);
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Lexend", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --pie: clamp(92px, 15vw, 150px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1B2926; --grid: #22332F; --card: #213230; --ink: #EDF2EC; --ink-soft: #A6B8B1;
+    --line: #3A4E48; --a: #F5C352; --b: #82B8F5; --good: #7AD6A3; --good-soft: #1E3B2F;
+    --bad: #F2909F; --bad-soft: #452930; --key: #EDF2EC; --key-fg: #1B2926; --key-edge: #8FA49C;
+    --focus: #82B8F5; --hatch-bg: #263935; --hatch-line: #3D5550;
+    --shadow: 0 18px 40px -22px rgba(0, 0, 0, .6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1B2926; --grid: #22332F; --card: #213230; --ink: #EDF2EC; --ink-soft: #A6B8B1;
+  --line: #3A4E48; --a: #F5C352; --b: #82B8F5; --good: #7AD6A3; --good-soft: #1E3B2F;
+  --bad: #F2909F; --bad-soft: #452930; --key: #EDF2EC; --key-fg: #1B2926; --key-edge: #8FA49C;
+  --focus: #82B8F5; --hatch-bg: #263935; --hatch-line: #3D5550;
+  --shadow: 0 18px 40px -22px rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+.app { max-width: 1040px; margin: 0 auto; display: grid; gap: 18px; }
+
+/* Kopfzeile */
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.brand-pie { width: 46px; height: 46px; flex: none; }
+.brand-pie .pie-rim { stroke-width: 9; }
+.brand-pie .pie-div { stroke-width: 7; }
+h1 {
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(1.4rem, 2.8vw, 2rem);
+  line-height: 1.1; letter-spacing: -.015em; margin: 0; text-wrap: balance;
+}
+.sub { margin: 2px 0 0; color: var(--ink-soft); font-size: .95rem; }
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.ghost {
+  background: var(--card); border: 1.5px solid var(--line); border-radius: 999px;
+  padding: 7px 14px; font-weight: 500; font-size: .9rem; cursor: pointer;
+}
+.ghost:hover { border-color: var(--ink-soft); }
+.switch {
+  display: inline-flex; align-items: center; gap: 9px; cursor: pointer; font-size: .9rem; font-weight: 500;
+  background: var(--card); border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 14px 6px 8px;
+}
+.switch input {
+  appearance: none; -webkit-appearance: none; margin: 0; flex: none;
+  width: 38px; height: 22px; border-radius: 999px; background: var(--line); position: relative; cursor: pointer;
+  transition: background .2s;
+}
+.switch input::before {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--card); transition: transform .2s;
+}
+.switch input:checked { background: var(--b); }
+.switch input:checked::before { transform: translateX(16px); }
+
+/* Fortschritt */
+.progress { display: flex; gap: 14px; }
+.pg { display: grid; gap: 5px; min-width: 0; flex-basis: 0; }
+.pg-label { font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.pg-row { display: flex; gap: 5px; }
+.seg { flex: 1; height: 10px; border-radius: 5px; background: var(--line); transition: background .3s; }
+.seg.now { background: var(--ink); }
+.seg.good { background: var(--good); }
+.seg.bad { background: var(--bad); }
+
+/* Aufgabenkarte */
+.board {
+  background: var(--card); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow);
+  padding: clamp(18px, 4vw, 36px);
+}
+.task { display: grid; justify-items: center; gap: clamp(18px, 3vw, 26px); }
+.meta { width: 100%; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; font-size: .92rem; color: var(--ink-soft); }
+.meta-left { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.level {
+  display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink);
+  border: 1.5px solid var(--line); border-radius: 999px; padding: 3px 12px 3px 10px;
+}
+.pips { display: inline-flex; gap: 3px; }
+.pips i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.pips i.on { background: var(--ink); }
+.score { font-variant-numeric: tabular-nums; }
+.score b { color: var(--good); font-weight: 600; }
+
+.expr {
+  display: flex; align-items: center; justify-content: center; flex-wrap: nowrap;
+  gap: clamp(10px, 2.6vw, 28px);
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(2.4rem, 8.5vw, 5.2rem); line-height: 1;
+  padding-block: 6px;
+}
+.bf { display: inline-flex; flex-direction: column; align-items: center; font-variant-numeric: tabular-nums; }
+.bf .bbar { align-self: stretch; height: .1em; margin: .1em -.08em; border-radius: .05em; background: var(--ink); }
+.bf.ca .bbar { background: var(--a); }
+.bf.cb .bbar { background: var(--b); }
+.plus { font-weight: 600; color: var(--ink-soft); }
+.slot {
+  display: inline-grid; place-items: center; width: 1.12em; height: 1.12em; font-size: .86em;
+  border: .05em dashed var(--ink-soft); border-radius: .22em; color: var(--ink-soft); font-weight: 800;
+  transition: background .25s, border-color .25s, color .25s;
+}
+.slot.filled { border-style: solid; border-color: var(--ink); color: var(--ink); }
+.slot.good { border-color: var(--good); color: var(--good); background: var(--good-soft); }
+.slot.bad { border-color: var(--bad); color: var(--bad); background: var(--bad-soft); animation: shake .45s; }
+@keyframes shake { 20%, 60% { transform: translateX(-.06em); } 40%, 80% { transform: translateX(.06em); } }
+
+.choices { width: min(580px, 100%); display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.prompt { grid-column: 1 / -1; margin: 0; text-align: center; font-size: 1.05rem; color: var(--ink-soft); }
+.key {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: var(--key); color: var(--key-fg); border: 0; border-radius: 18px;
+  padding: 14px 10px 14px; cursor: pointer;
+  box-shadow: 0 6px 0 var(--key-edge);
+  transition: transform .08s, box-shadow .08s;
+}
+.key:hover { transform: translateY(-1px); box-shadow: 0 7px 0 var(--key-edge); }
+.key:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--key-edge); }
+.key .sym { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.6rem, 7vw, 3.6rem); line-height: 1; }
+.key .lbl { font-size: .98rem; font-weight: 500; }
+.kbd-hint { grid-column: 1 / -1; margin: 4px 0 0; text-align: center; font-size: .82rem; color: var(--ink-soft); display: none; }
+@media (hover: hover) and (pointer: fine) { .kbd-hint { display: block; } }
+kbd {
+  font-family: var(--font-body); font-size: .78rem; border: 1px solid var(--line); border-bottom-width: 2px;
+  border-radius: 5px; padding: 0 5px; background: var(--paper);
+}
+
+/* Kreisanteile */
+.viz { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 10px clamp(12px, 3vw, 30px); }
+.viz.enter { animation: rise .35s ease-out; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.vgroup { display: flex; align-items: flex-start; gap: clamp(6px, 1.6vw, 14px); }
+.pfig { margin: 0; display: grid; justify-items: center; gap: 6px; }
+.pfig figcaption { font-size: .95rem; color: var(--ink-soft); min-height: 2.6em; display: flex; align-items: center; }
+.pfig figcaption .f { font-size: 1.35em; color: var(--ink); }
+svg.pie { width: var(--pie); height: var(--pie); overflow: visible; display: block; }
+.op {
+  height: var(--pie); display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 600; font-size: clamp(1.6rem, 4vw, 2.4rem); color: var(--ink-soft);
+}
+.pie-base { fill: var(--card); }
+.pie-faint { fill: none; stroke: var(--line); stroke-width: 2; }
+.pie-gap { fill: url(#hatch); stroke: var(--ink-soft); stroke-width: 1.5; stroke-dasharray: 4 4; opacity: 0; transition: opacity .45s; }
+.pie-gap.on { opacity: 1; }
+.fill-a { fill: var(--a); }
+.fill-b { fill: var(--b); }
+.pie-div { fill: none; stroke: var(--card); stroke-width: 3; }
+.pie-rim { fill: none; stroke: var(--ink); stroke-width: 3.5; transition: stroke .3s; }
+.c2:not(.active) .pie-rim { stroke: var(--ink-soft); stroke-width: 2.5; stroke-dasharray: 6 7; }
+.c2:not(.active) figcaption { opacity: .7; }
+.hatch-bg { fill: var(--hatch-bg); }
+.hatch-line { stroke: var(--hatch-line); stroke-width: 4; }
+.vcap { flex-basis: 100%; margin: 2px 0 0; text-align: center; font-size: 1.08rem; min-height: 2.4em; text-wrap: balance; }
+
+/* Kleine Brüche im Fließtext */
+.f {
+  display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle;
+  font-size: .84em; line-height: 1.08; font-weight: 600; margin: 0 .1em; font-variant-numeric: tabular-nums;
+}
+.f .n { border-bottom: 2px solid currentColor; padding: 0 .18em; }
+.f .d { padding: 0 .18em; }
+.f.ca .n { border-bottom: 3px solid var(--a); }
+.f.cb .n { border-bottom: 3px solid var(--b); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Auflösung */
+.verdict {
+  width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 30px;
+  border-radius: 18px; padding: 18px clamp(16px, 3vw, 28px);
+}
+.verdict.is-good { background: var(--good-soft); }
+.verdict.is-bad { background: var(--bad-soft); }
+.stamp {
+  flex: none; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.35rem, 3.4vw, 2rem);
+  letter-spacing: .03em; text-transform: uppercase; line-height: 1; white-space: nowrap;
+  padding: .38em .6em .32em; border: .12em solid currentColor; border-radius: .3em;
+  outline: .05em solid currentColor; outline-offset: .12em;
+  transform: rotate(-6deg); margin: 6px 4px;
+  animation: stamp .38s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+.is-good .stamp { color: var(--good); }
+.is-bad .stamp { color: var(--bad); }
+@keyframes stamp { from { opacity: 0; transform: rotate(-6deg) scale(1.9); } to { opacity: 1; transform: rotate(-6deg) scale(1); } }
+.v-text { flex: 1 1 320px; min-width: 0; display: grid; gap: 8px; }
+.v-text p { margin: 0; }
+.v-title { font-weight: 600; font-size: 1.1rem; }
+.v-calc { font-size: 1.2rem; line-height: 1.9; }
+.v-tip { color: var(--ink-soft); line-height: 1.9; }
+.v-tip b { color: var(--ink); font-weight: 600; }
+
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.go {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--key); color: var(--key-fg); border: 0; border-radius: 14px;
+  padding: 13px 24px; font-weight: 600; font-size: 1.05rem; cursor: pointer;
+  box-shadow: 0 4px 0 var(--key-edge); transition: transform .08s, box-shadow .08s;
+}
+.go:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--key-edge); }
+.go:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--key-edge); }
+.go svg { width: 18px; height: 18px; }
+.go.alt { background: var(--card); color: var(--ink); border: 1.5px solid var(--line); box-shadow: 0 4px 0 var(--line); }
+
+/* Auswertung */
+.summary { display: grid; justify-items: center; gap: 18px; text-align: center; }
+.summary .stamp { color: var(--b); font-size: clamp(1.5rem, 4vw, 2.2rem); }
+.summary h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.05; margin: 0; letter-spacing: -.02em; }
+.summary .lead { margin: 0; color: var(--ink-soft); max-width: 52ch; font-size: 1.05rem; text-wrap: balance; }
+.recap { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; text-align: left; }
+.recap li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 14px; border-radius: 12px; font-size: 1.1rem; }
+.recap li.good { background: var(--good-soft); }
+.recap li.bad { background: var(--bad-soft); }
+.recap .r-mark { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; color: var(--ink-soft); white-space: nowrap; }
+.recap .r-mark svg { width: 20px; height: 20px; flex: none; }
+.recap li.good svg { color: var(--good); }
+.recap li.bad svg { color: var(--bad); }
+
+@media (max-width: 560px) {
+  .progress { gap: 8px; }
+  .pg-row { gap: 3px; }
+  .switch span { font-size: .85rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect class="hatch-bg" width="9" height="9"></rect>
+      <line class="hatch-line" x1="0" y1="0" x2="0" y2="9"></line>
+    </pattern>
+  </defs>
+</svg>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg class="brand-pie" id="brandPie" aria-hidden="true"></svg>
+      <div>
+        <h1>Mehr als ein Ganzes?</h1>
+        <p class="sub">Zwei Brüche, eine Frage: Ist die Summe größer oder kleiner als 1?</p>
+      </div>
+    </div>
+    <div class="tools">
+      <label class="switch" for="pauseToggle" title="Nach den Kreisbildern wartet die App, bis jemand auf „Auflösen“ klickt. Gut zum Besprechen in der Klasse.">
+        <input type="checkbox" id="pauseToggle">
+        <span>Pause vor der Auflösung</span>
+      </label>
+      <button class="ghost" id="fsBtn" type="button" hidden>Vollbild</button>
+      <button class="ghost" id="restartBtn" type="button">Neu starten</button>
+    </div>
+  </header>
+
+  <nav class="progress" id="progress" aria-label="Fortschritt"></nav>
+
+  <main class="board">
+    <section class="task" id="taskView">
+      <div class="meta">
+        <span class="meta-left" id="meta"></span>
+        <span class="score" id="score"></span>
+      </div>
+
+      <div class="expr" id="expr" role="group"></div>
+
+      <div class="choices" id="choices">
+        <p class="prompt">Größer oder kleiner als 1? Entscheide, ohne genau auszurechnen.</p>
+        <button class="key" id="btnLess" type="button" aria-label="Die Summe ist kleiner als 1">
+          <span class="sym" aria-hidden="true">&lt;</span><span class="lbl">kleiner als 1</span>
+        </button>
+        <button class="key" id="btnMore" type="button" aria-label="Die Summe ist größer als 1">
+          <span class="sym" aria-hidden="true">&gt;</span><span class="lbl">größer als 1</span>
+        </button>
+        <p class="kbd-hint">Tastatur: <kbd>←</kbd> kleiner · <kbd>→</kbd> größer · <kbd>Enter</kbd> weiter</p>
+      </div>
+
+      <div class="viz" id="viz" hidden>
+        <div class="vgroup">
+          <figure class="pfig"><svg class="pie" id="pieA" aria-hidden="true"></svg><figcaption id="capA"></figcaption></figure>
+          <span class="op" aria-hidden="true">+</span>
+          <figure class="pfig"><svg class="pie" id="pieB" aria-hidden="true"></svg><figcaption id="capB"></figcaption></figure>
+        </div>
+        <div class="vgroup">
+          <span class="op" aria-hidden="true">=</span>
+          <figure class="pfig"><svg class="pie" id="pieC1" aria-hidden="true"></svg><figcaption>1. Ganzes</figcaption></figure>
+          <figure class="pfig c2" id="figC2"><svg class="pie" id="pieC2" aria-hidden="true"></svg><figcaption>2. Ganzes</figcaption></figure>
+        </div>
+        <p class="vcap" id="vcap" aria-live="polite"></p>
+      </div>
+
+      <div class="verdict" id="verdict" aria-live="polite" hidden></div>
+
+      <div class="actions" id="actions" hidden>
+        <button class="go" id="revealBtn" type="button" hidden>Auflösen</button>
+        <button class="go" id="nextBtn" type="button" hidden>
+          <span id="nextLabel">Nächste Aufgabe</span>
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5"></path></svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="summary" id="summary" hidden></section>
+  </main>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+
+  /* ---------- Bruchrechnung ---------- */
+  const gcd = (x, y) => { x = Math.abs(x); y = Math.abs(y); while (y) [x, y] = [y, x % y]; return x; };
+  const lcm = (x, y) => (x / gcd(x, y)) * y;
+  const red = (n, d) => { const g = gcd(n, d) || 1; return [n / g, d / g]; };
+
+  const LEVEL_NAME = { 1: 'leicht', 2: 'mittel', 3: 'schwer' };
+
+  // Startaufgaben: von "Vergleich mit 1/2 reicht" bis "ganz knapp an 1".
+  const COURSE = [
+    [2, 3, 1, 2, 1], [3, 5, 1, 4, 1], [1, 3, 2, 5, 1], [3, 4, 2, 3, 1],
+    [4, 5, 1, 3, 2], [5, 6, 1, 4, 2], [5, 8, 1, 4, 2], [3, 10, 3, 5, 2],
+    [3, 5, 3, 8, 3], [3, 8, 2, 3, 3], [5, 12, 3, 5, 3], [7, 10, 2, 7, 3],
+  ].map(([a, b, c, d, level]) => ({ a, b, c, d, level }));
+
+  function info(t) {
+    const L = lcm(t.b, t.d);
+    const an = t.a * (L / t.b), cn = t.c * (L / t.d), n = an + cn;
+    return { L, an, cn, n, more: n > L };
+  }
+
+  const F = (n, d, cls = '') =>
+    `<span class="f ${cls}"><span class="n">${n}</span><span class="sr">/</span><span class="d">${d}</span></span>`;
+  const BigF = (n, d, cls) =>
+    `<span class="bf ${cls}"><span>${n}</span><span class="bbar"></span><span class="sr">/</span><span>${d}</span></span>`;
+
+  function calcHTML(t) {
+    const { L, an, cn, n, more } = info(t);
+    let s = `${F(t.a, t.b, 'ca')} + ${F(t.c, t.d, 'cb')}`;
+    if (t.b !== t.d) s += ` = ${F(an, L)} + ${F(cn, L)}`;
+    s += ` = ${F(n, L)}`;
+    const [rn, rd] = red(n, L);
+    if (rd !== L) s += ` = ${F(rn, rd)}`;
+    return s + ` ${more ? '&gt;' : '&lt;'} 1`;
+  }
+
+  function tipHTML(t) {
+    const hA = Math.sign(2 * t.a - t.b), hB = Math.sign(2 * t.c - t.d);
+    const rel = (h) => (h > 0 ? 'mehr als die Hälfte' : h < 0 ? 'weniger als die Hälfte' : 'genau die Hälfte');
+    const { more } = info(t);
+    if ((hA >= 0 && hB >= 0) || (hA <= 0 && hB <= 0)) {
+      return `<b>Vergleiche mit der Hälfte:</b> ${F(t.a, t.b, 'ca')} ist ${rel(hA)}, ${F(t.c, t.d, 'cb')} ist ${hA === hB ? 'auch ' : ''}${rel(hB)}. ` +
+        `Zwei Hälften ergeben genau ein Ganzes. Hier ist es ${more ? 'mehr' : 'weniger'}, also ist die Summe ${more ? 'größer' : 'kleiner'} als 1.`;
+    }
+    const [gn, gd] = red(t.b - t.a, t.b);
+    const L2 = lcm(gd, t.d);
+    const gN = gn * (L2 / gd), cN = t.c * (L2 / t.d);
+    const bigger = cN > gN;
+    const parts = [];
+    if (gd !== L2) parts.push(`${F(gn, gd)} = ${F(gN, L2)}`);
+    if (t.d !== L2) parts.push(`${F(t.c, t.d, 'cb')} = ${F(cN, L2)}`);
+    const paren = parts.length ? ` (gleichnamig: ${parts.join(' und ')})` : '';
+    return `<b>Ergänze bis zum Ganzen:</b> Nach ${F(t.a, t.b, 'ca')} fehlen noch ${F(gn, gd)}. ` +
+      `${F(t.c, t.d, 'cb')} ist ${bigger ? 'mehr' : 'weniger'} als ${F(gn, gd)}${paren}. ` +
+      `Also wird das Ganze ${bigger ? 'überschritten' : 'nicht voll'}.`;
+  }
+
+  /* ---------- Zufallsaufgaben ---------- */
+  const rnd = (n) => Math.floor(Math.random() * n);
+  const pick = (arr) => arr[rnd(arr.length)];
+  function randFrac(dens) {
+    for (;;) { const d = pick(dens), n = 1 + rnd(d - 1); if (gcd(n, d) === 1) return [n, d]; }
+  }
+  function genTask(level, used) {
+    const dens = level === 3 ? [3, 4, 5, 6, 7, 8, 9, 10, 12] : [2, 3, 4, 5, 6, 8, 10, 12];
+    for (let i = 0; i < 20000; i++) {
+      const [a, b] = randFrac(dens), [c, d] = randFrac(dens);
+      if (a * d === c * b) continue;
+      const dist = Math.abs(a / b + c / d - 1);
+      if (dist < 1e-9) continue;
+      const hA = Math.sign(2 * a - b), hB = Math.sign(2 * c - d);
+      const halfDecides = (hA >= 0 && hB >= 0) || (hA <= 0 && hB <= 0);
+      const ok = level === 1 ? halfDecides && dist >= 1 / 6
+        : level === 2 ? !halfDecides && dist >= 1 / 12 && dist <= 1 / 4
+        : !halfDecides && dist < 1 / 12;
+      const key = `${a}/${b}+${c}/${d}`;
+      if (!ok || used.has(key)) continue;
+      used.add(key);
+      return { a, b, c, d, level };
+    }
+    return { ...COURSE[(level - 1) * 4] };
+  }
+  function randomRound() {
+    const used = new Set(), out = [];
+    for (const lv of [1, 2, 3]) for (let i = 0; i < 4; i++) out.push(genTask(lv, used));
+    return out;
+  }
+
+  /* ---------- Kreisdiagramme ---------- */
+  const R = 88;
+  const fx = (v) => Math.round(v * 1000) / 1000;
+  const pt = (t) => { const ang = t * 2 * Math.PI - Math.PI / 2; return [fx(R * Math.cos(ang)), fx(R * Math.sin(ang))]; };
+  function sectorD(s, e) {
+    const span = e - s;
+    if (span <= 1e-6) return '';
+    if (span >= 1 - 1e-6) return `M 0 ${-R} A ${R} ${R} 0 1 1 0 ${R} A ${R} ${R} 0 1 1 0 ${-R} Z`;
+    const [x1, y1] = pt(s), [x2, y2] = pt(e);
+    return `M 0 0 L ${x1} ${y1} A ${R} ${R} 0 ${span > 0.5 ? 1 : 0} 1 ${x2} ${y2} Z`;
+  }
+  const radialsD = (list) => list.map((t) => { const [x, y] = pt(t); return `M 0 0 L ${x} ${y}`; }).join(' ');
+
+  class Pie {
+    constructor(svg) {
+      svg.setAttribute('viewBox', '-100 -100 200 200');
+      svg.innerHTML =
+        `<circle class="pie-base" r="${R}"></circle><path class="pie-faint"></path><path class="pie-gap"></path>` +
+        `<path class="pie-fill fill-a"></path><path class="pie-fill fill-b"></path><path class="pie-div"></path>` +
+        `<circle class="pie-rim" r="${R}"></circle>`;
+      [this.faint, this.gap, this.fa, this.fb, this.div] =
+        ['.pie-faint', '.pie-gap', '.fill-a', '.fill-b', '.pie-div'].map((s) => svg.querySelector(s));
+      this.reset();
+    }
+    reset() { this.st = { faint: 0, gap: null, a: null, b: null }; this.gap.classList.remove('on'); this.render(); }
+    set(patch) { Object.assign(this.st, patch); this.render(); }
+    render() {
+      const { faint, gap, a, b } = this.st;
+      this.faint.setAttribute('d', faint ? radialsD(Array.from({ length: faint }, (_, k) => k / faint)) : '');
+      this.gap.setAttribute('d', gap ? sectorD(gap[0], gap[1]) : '');
+      this.fa.setAttribute('d', a ? sectorD(a.s, a.e) : '');
+      this.fb.setAttribute('d', b ? sectorD(b.s, b.e) : '');
+      const lines = [];
+      for (const ly of [a, b]) {
+        if (!ly || ly.e - ly.s <= 1e-6) continue;
+        lines.push(ly.s);
+        const k0 = Math.ceil((ly.s - ly.o) * ly.den - 1e-6), k1 = Math.floor((ly.e - ly.o) * ly.den + 1e-6);
+        for (let k = k0; k <= k1; k++) lines.push(ly.o + k / ly.den);
+      }
+      this.div.setAttribute('d', radialsD(lines));
+    }
+  }
+
+  /* ---------- Elemente ---------- */
+  const el = {
+    progress: $('#progress'), meta: $('#meta'), score: $('#score'), expr: $('#expr'),
+    choices: $('#choices'), viz: $('#viz'), vcap: $('#vcap'), capA: $('#capA'), capB: $('#capB'),
+    figC2: $('#figC2'), verdict: $('#verdict'), actions: $('#actions'), reveal: $('#revealBtn'),
+    next: $('#nextBtn'), nextLabel: $('#nextLabel'), taskView: $('#taskView'), summary: $('#summary'),
+    pause: $('#pauseToggle'), restart: $('#restartBtn'), fs: $('#fsBtn'),
+  };
+  const pieA = new Pie($('#pieA')), pieB = new Pie($('#pieB')), pieC1 = new Pie($('#pieC1')), pieC2 = new Pie($('#pieC2'));
+  const pies = [pieA, pieB, pieC1, pieC2];
+  new Pie($('#brandPie')).set({ a: { s: 0, e: 5 / 8, den: 8, o: 0 }, b: { s: 5 / 8, e: 7 / 8, den: 4, o: 5 / 8 } });
+
+  const state = { tasks: COURSE.slice(), idx: 0, answers: [], phase: 'ask', pending: null };
+  const cur = () => state.tasks[state.idx];
+  let slot = null;
+
+  /* ---------- Animation ---------- */
+  let runToken = 0;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const ease = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+  function tween(ms, fn, tok) {
+    return new Promise((res) => {
+      if (reduced.matches) { if (tok === runToken) fn(1); return res(); }
+      const t0 = performance.now();
+      const step = (now) => {
+        if (tok !== runToken) return res();
+        const p = Math.min(1, (now - t0) / ms);
+        fn(ease(p));
+        if (p < 1) requestAnimationFrame(step); else res();
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  const wait = (ms) => new Promise((r) => setTimeout(r, reduced.matches ? Math.min(ms, 400) : ms));
+  const caption = (html) => { el.vcap.innerHTML = html; };
+
+  async function reveal(t, tok, instant = false) {
+    const T = (ms, fn) => (instant ? (fn(1), Promise.resolve()) : tween(ms, fn, tok));
+    const W = (ms) => (instant ? Promise.resolve() : wait(ms));
+    const alive = () => tok === runToken;
+    const A = t.a / t.b, B = t.c / t.d;
+    const { L, n, more } = info(t);
+
+    pies.forEach((p) => p.reset());
+    el.figC2.classList.remove('active');
+    pieA.set({ faint: t.b });
+    pieB.set({ faint: t.d });
+
+    caption(`So groß sind ${F(t.a, t.b, 'ca')} und ${F(t.c, t.d, 'cb')} als Kreisanteile.`);
+    await T(650, (p) => pieA.set({ a: { s: 0, e: A * p, den: t.b, o: 0 } }));
+    if (!alive()) return;
+    await T(650, (p) => pieB.set({ b: { s: 0, e: B * p, den: t.d, o: 0 } }));
+    if (!alive()) return;
+    await W(450);
+    if (!alive()) return;
+
+    caption(`Zuerst kommt ${F(t.a, t.b, 'ca')} in das Ganze.`);
+    await T(700, (p) => pieC1.set({ a: { s: 0, e: A * p, den: t.b, o: 0 } }));
+    if (!alive()) return;
+
+    const [gn, gd] = red(t.b - t.a, t.b);
+    pieC1.set({ gap: [A, 1] });
+    pieC1.gap.classList.add('on');
+    caption(`Bis zum Ganzen fehlen noch ${F(gn, gd)}.`);
+    await W(1100);
+    if (!alive()) return;
+
+    caption(`Jetzt kommt ${F(t.c, t.d, 'cb')} dazu …`);
+    await T(1150, (p) => {
+      const c = A + B * p;
+      pieC1.set({ b: { s: A, e: Math.min(c, 1), den: t.d, o: A } });
+      if (c > 1) {
+        el.figC2.classList.add('active');
+        pieC2.set({ b: { s: 0, e: c - 1, den: t.d, o: A - 1 } });
+      }
+    });
+    if (!alive()) return;
+
+    if (more) {
+      const [rn, rd] = red(n - L, L);
+      caption(`Das erste Ganze ist voll. ${F(rn, rd, 'cb')} liegt schon im zweiten Ganzen.`);
+    } else {
+      const [mn, md] = red(L - n, L);
+      caption(`Das Ganze wird nicht voll. Es fehlen noch ${F(mn, md)}.`);
+    }
+  }
+
+  /* ---------- Darstellung ---------- */
+  function setActions() {
+    el.actions.hidden = el.reveal.hidden && el.next.hidden;
+  }
+
+  function renderProgress() {
+    el.progress.innerHTML = [1, 2, 3].map((lv) => {
+      const idxs = state.tasks.map((t, i) => (t.level === lv ? i : -1)).filter((i) => i >= 0);
+      if (!idxs.length) return '';
+      const segs = idxs.map((i) => {
+        const ans = state.answers[i];
+        const cls = ans ? (ans.correct ? 'good' : 'bad') : (i === state.idx && state.phase !== 'summary' ? 'now' : '');
+        return `<span class="seg ${cls}"></span>`;
+      }).join('');
+      return `<div class="pg" style="flex-grow:${idxs.length}"><span class="pg-label">${LEVEL_NAME[lv]}</span><div class="pg-row">${segs}</div></div>`;
+    }).join('');
+  }
+
+  function renderMeta() {
+    const t = cur();
+    const pips = [1, 2, 3].map((k) => `<i class="${k <= t.level ? 'on' : ''}"></i>`).join('');
+    el.meta.innerHTML =
+      `<span>Aufgabe ${state.idx + 1} von ${state.tasks.length}</span>` +
+      `<span class="level"><span class="pips" aria-hidden="true">${pips}</span>Stufe ${t.level} · ${LEVEL_NAME[t.level]}</span>`;
+    const right = state.answers.filter((x) => x && x.correct).length;
+    const done = state.answers.filter(Boolean).length;
+    el.score.innerHTML = `<b>${right}</b> von ${done} richtig`;
+  }
+
+  function renderTask() {
+    runToken++;
+    state.phase = 'ask';
+    state.pending = null;
+    const t = cur();
+    el.taskView.hidden = false;
+    el.summary.hidden = true;
+    el.expr.setAttribute('aria-label', `${t.a}/${t.b} plus ${t.c}/${t.d} im Vergleich zu 1`);
+    el.expr.innerHTML =
+      BigF(t.a, t.b, 'ca') + '<span class="plus" aria-hidden="true">+</span>' + BigF(t.c, t.d, 'cb') +
+      '<span class="slot" id="slot" aria-label="Vergleichszeichen">?</span><span class="one">1</span>';
+    slot = $('#slot');
+    el.choices.hidden = false;
+    el.viz.hidden = true;
+    el.verdict.hidden = true;
+    el.reveal.hidden = true;
+    el.next.hidden = true;
+    setActions();
+    pies.forEach((p) => p.reset());
+    el.figC2.classList.remove('active');
+    el.vcap.innerHTML = '';
+    el.capA.innerHTML = F(t.a, t.b, 'ca');
+    el.capB.innerHTML = F(t.c, t.d, 'cb');
+    renderMeta();
+    renderProgress();
+  }
+
+  function showChoice(sign) {
+    slot.textContent = sign;
+    slot.classList.add('filled');
+    el.choices.hidden = true;
+    el.viz.hidden = false;
+    el.viz.classList.remove('enter');
+    void el.viz.offsetWidth;
+    el.viz.classList.add('enter');
+  }
+
+  function choose(sign) {
+    if (state.phase !== 'ask') return;
+    const t = cur();
+    const correct = (sign === '>') === info(t).more;
+    state.pending = { sign, correct };
+    state.phase = 'animating';
+    showChoice(sign);
+    const tok = ++runToken;
+    reveal(t, tok).then(async () => {
+      if (tok !== runToken) return;
+      if (el.pause.checked) {
+        state.phase = 'await';
+        el.reveal.hidden = false;
+        setActions();
+        el.reveal.focus({ preventScroll: true });
+      } else {
+        await wait(550);
+        if (tok !== runToken) return;
+        showVerdict();
+      }
+    });
+  }
+
+  function showVerdict() {
+    if (!state.pending) return;
+    const t = cur();
+    const { sign, correct } = state.pending;
+    const { more } = info(t);
+    state.answers[state.idx] = { sign, correct };
+    state.phase = 'verdict';
+    slot.classList.add(correct ? 'good' : 'bad');
+    const rel = more ? 'größer' : 'kleiner';
+    el.verdict.className = 'verdict ' + (correct ? 'is-good' : 'is-bad');
+    el.verdict.innerHTML =
+      `<div class="stamp">${correct ? 'Richtig!' : 'Leider falsch'}</div>` +
+      `<div class="v-text">` +
+      `<p class="v-title">${correct ? `Genau, die Summe ist ${rel} als 1.` : `Die Summe ist ${rel} als 1, nicht ${more ? 'kleiner' : 'größer'}.`}</p>` +
+      `<p class="v-calc">${calcHTML(t)}</p>` +
+      `<p class="v-tip">${tipHTML(t)}</p>` +
+      `</div>`;
+    el.verdict.hidden = false;
+    el.reveal.hidden = true;
+    el.next.hidden = false;
+    el.nextLabel.textContent = state.idx === state.tasks.length - 1 ? 'Zur Auswertung' : 'Nächste Aufgabe';
+    setActions();
+    el.next.focus({ preventScroll: true });
+    renderMeta();
+    renderProgress();
+    try { el.actions.scrollIntoView({ block: 'nearest', behavior: reduced.matches ? 'auto' : 'smooth' }); } catch (e) {}
+  }
+
+  function next() {
+    if (state.phase !== 'verdict') return;
+    if (state.idx >= state.tasks.length - 1) return showSummary();
+    state.idx++;
+    renderTask();
+    try { el.progress.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+  }
+
+  const ICON_OK = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5l4 4 8-9"></path></svg>';
+  const ICON_NO = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"></path></svg>';
+
+  function showSummary() {
+    runToken++;
+    state.phase = 'summary';
+    const total = state.tasks.length;
+    const right = state.answers.filter((x) => x && x.correct).length;
+    const stamp = right === total ? 'Perfekt!' : right >= total * 0.75 ? 'Super!' : right >= total * 0.5 ? 'Gut gemacht' : 'Weiter üben';
+    const lead = right === total
+      ? 'Alle Aufgaben richtig. Du hast ein sehr gutes Gefühl dafür, wie groß Brüche sind.'
+      : right >= total * 0.75
+        ? 'Sehr gut. Schau dir die Kreisbilder bei den roten Aufgaben noch einmal an.'
+        : right >= total * 0.5
+          ? 'Ein guter Anfang. Vergleiche jeden Bruch zuerst mit der Hälfte und frage dann: Was fehlt noch bis zum Ganzen?'
+          : 'Tipp: Vergleiche jeden Bruch zuerst mit der Hälfte. Danach hilft die Frage: Was fehlt noch bis zum Ganzen?';
+    const items = state.tasks.map((t, i) => {
+      const ans = state.answers[i];
+      const ok = ans && ans.correct;
+      const { more } = info(t);
+      const mine = ans && !ans.correct ? `du: ${ans.sign === '>' ? '&gt;' : '&lt;'}` : '';
+      return `<li class="${ok ? 'good' : 'bad'}"><span>${F(t.a, t.b, 'ca')} + ${F(t.c, t.d, 'cb')} ${more ? '&gt;' : '&lt;'} 1</span>` +
+        `<span class="r-mark">${mine}${ok ? ICON_OK : ICON_NO}</span></li>`;
+    }).join('');
+    el.summary.innerHTML =
+      `<div class="stamp">${stamp}</div>` +
+      `<h2>${right} von ${total} richtig</h2>` +
+      `<p class="lead">${lead}</p>` +
+      `<ol class="recap">${items}</ol>` +
+      `<div class="actions">` +
+      `<button class="go" type="button" id="againBtn">Dieselben Aufgaben nochmal</button>` +
+      `<button class="go alt" type="button" id="newBtn">Neue Aufgaben würfeln</button>` +
+      `</div>`;
+    el.taskView.hidden = true;
+    el.summary.hidden = false;
+    renderProgress();
+    $('#againBtn').addEventListener('click', () => startRound(state.tasks));
+    $('#newBtn').addEventListener('click', () => startRound(randomRound()));
+    $('#againBtn').focus({ preventScroll: true });
+  }
+
+  function startRound(tasks) {
+    state.tasks = tasks.map((t) => ({ ...t }));
+    state.idx = 0;
+    state.answers = [];
+    renderTask();
+  }
+
+  /* ---------- Bedienung ---------- */
+  $('#btnLess').addEventListener('click', () => choose('<'));
+  $('#btnMore').addEventListener('click', () => choose('>'));
+  el.reveal.addEventListener('click', () => { if (state.phase === 'await') showVerdict(); });
+  el.next.addEventListener('click', next);
+  el.restart.addEventListener('click', () => startRound(COURSE));
+
+  try { el.pause.checked = localStorage.getItem('bruch-pause') === '1'; } catch (e) {}
+  el.pause.addEventListener('change', () => {
+    try { localStorage.setItem('bruch-pause', el.pause.checked ? '1' : '0'); } catch (e) {}
+  });
+
+  try {
+    if (document.fullscreenEnabled) {
+      el.fs.hidden = false;
+      el.fs.addEventListener('click', () => {
+        const p = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+        if (p && p.catch) p.catch(() => {});
+      });
+      document.addEventListener('fullscreenchange', () => {
+        el.fs.textContent = document.fullscreenElement ? 'Vollbild beenden' : 'Vollbild';
+      });
+    }
+  } catch (e) {}
+
+  document.addEventListener('keydown', (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.target && e.target.closest && e.target.closest('input, textarea, select')) return;
+    if (state.phase === 'ask') {
+      if (e.key === '<' || e.key === 'ArrowLeft') { e.preventDefault(); choose('<'); }
+      else if (e.key === '>' || e.key === 'ArrowRight') { e.preventDefault(); choose('>'); }
+    } else if (state.phase === 'await' && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault(); showVerdict();
+    } else if (state.phase === 'verdict' && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault(); next();
+    }
+  });
+
+  /* ---------- Start (mit Zustand, falls die Seite aktualisiert wird) ---------- */
+  try {
+    window.claude?.hot?.snapshot?.(() => ({
+      tasks: state.tasks, idx: state.idx, answers: state.answers, summary: state.phase === 'summary',
+    }));
+  } catch (e) {}
+
+  function start(data) {
+    const valid = data && Array.isArray(data.tasks) && data.tasks.length &&
+      data.tasks.every((t) => t && [t.a, t.b, t.c, t.d, t.level].every(Number.isInteger));
+    if (valid) {
+      state.tasks = data.tasks;
+      state.idx = Math.max(0, Math.min(data.idx | 0, data.tasks.length - 1));
+      state.answers = Array.isArray(data.answers) ? data.answers : [];
+      if (data.summary) return showSummary();
+    }
+    renderTask();
+    const ans = state.answers[state.idx];
+    if (ans) {
+      state.pending = ans;
+      showChoice(ans.sign);
+      reveal(cur(), runToken, true);
+      showVerdict();
+    }
+  }
+  const hot = window.claude && window.claude.hot;
+  if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
+})();
+</script>
+</body>
+</html>
